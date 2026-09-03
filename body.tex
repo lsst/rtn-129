@@ -1,8 +1,111 @@
 \section{Introduction}
+\label{intro}
 
-\textbf{Put your paper here.}
-\vskip 0.4in
+Astrometry refers to the determination of the position of astronomical sources on the sky.
+For an optical wide-field telescope such as the Vera C. Rubin Observatory \citep{2019ApJ...873..111I} and its CCD mosaic camera, LSSTCam \citep{10.71929/rubin/2571927}, obtaining an astrometric solution therefore means determining the transformation that maps pixel coordinates on a given CCD to a position on the sky, known as the World Coordinate System (WCS).
+A precise and unbiased astrometric solution is important for a broad range of science cases, from solar system science, such as searches for trans-Neptunian objects \citep[TNOs;][]{2020ApJS..247...32B}, to dark energy constraints from cosmic shear \citep{2021A&A...650A..81L}.
+The Rubin Observatory has a strict requirement on its astrometric repeatability (the dispersion of the measured positions of the same sources from one visit to another) of 10\,mas, with a stretch goal of 5\,mas \citep{LPM-17}.
 
+To first order, obtaining the astrometric solution consists in fitting the optical distortion that maps pixel coordinates to sky coordinates.
+To do so, the Rubin Observatory uses the same astrometric model as the Dark Energy Survey \citep[DES;][hereafter B17]{2017PASP..129g4503B}, adapted to the needs of the Rubin Observatory within 
+the LSST Science Pipelines \citep{2019ASPC..523..521B}, as described in \citet[hereafter S24]{DMTN-266}, with The Monster \citep{DMTN-277} as the reference catalog.
+The astrometric residuals discussed in this paper are the difference between the position of a source fitted by this model over all the overlapping visits and its measured position in a given image.
+Once the optical distortion is fit, at least three effects still affect this mapping: differential chromatic refraction (DCR; see, e.g., \citealt{2012PASP..124.1113A}), static shifts caused by CCD defects such as tree rings (see, e.g., \citealt{2017JInst..12C5015P}), and atmospheric turbulence (see, e.g., B17).
+All these effects are present at the same time, but we do not discuss DCR in this analysis.
+We focus on the astrometric distortions induced by atmospheric turbulence, and we take a deeper look at the static patterns, which can be derived directly once atmospheric turbulence is corrected.
 
+B17 noticed that, once the astrometric model is fit, the astrometric residuals of a single visit are compatible with a pure $E$-mode field with a variance of ${\sim}100\,\mathrm{mas}^2$.
+Because the residual field is pure $E$-mode and shows long stripe-like patterns, it was interpreted as the signature of atmospheric turbulence: the displacement field follows the gradient of the variations of the optical refractive index integrated along the line of sight.
+Given the nature of turbulence, all the information contained in the astrometric residual field can be described by its two-point statistics, and Gaussian Process Regression \citep[GPR;][]{rasmussen2006} is therefore the optimal model for it.
+\citet[hereafter F21]{2021AJ....162..106F} modeled it with a GPR, using an isotropic von K\'arm\'an kernel and imposing a curl-free constraint on the displacement field, and were able to remove most of it, at the cost of an expensive hyperparameter optimization and inference that require multiple Cholesky decompositions.
+\citet[hereafter L21]{2021A&A...650A..81L} found the same type of pattern on the Hyper Suprime-Cam (HSC): a pure $E$-mode field, with a variance of ${\sim}30\,\mathrm{mas}^2$.
+L21 also used a GPR with a von K\'arm\'an kernel, and demonstrated on HSC data that it performs better than the standard Gaussian kernel; but they introduced three major changes with respect to F21.
+First, L21 did not impose the curl-free constraint and modeled each component of the displacement field independently.
+Second, L21 fit the anisotropy of the spatial correlation, which varies from one exposure to another.
+The third change is algorithmic.
+Instead of estimating the hyperparameters of the kernel with a standard maximum-likelihood approach, they measured the two-point correlation function of the astrometric residual field directly and fit the hyperparameters of the von K\'arm\'an kernel to it with a simple least-squares minimization.
+This reduces the cost of the hyperparameter optimization from $O(N^3)$ to $O(N \log N)$, while keeping a Cholesky factorization for the inference.
+This method removes about 90\% of the variance that turbulence introduces in the astrometric dispersion.
+Following the path paved by L21, \citet[hereafter G25]{2025AJ....170..361G} pushed the approach further on DES data by skipping the hyperparameter fit altogether, as well as the constraint of an analytical function to describe the spatial correlation, and using an interpolated version of the measured two-point correlation function directly as the kernel.
+As there is no direct comparison with the other methods, it appears to perform similarly to the previous ones.
+The price is a singular value decomposition (SVD) to remove the negative eigenvalues, since the resulting covariance matrix is not positive definite.
+Even with this SVD, we found G25 to be faster than L21, because there is no hyperparameter fit anymore and no evaluation of the von K\'arm\'an kernel, whose calls to Bessel functions are slow.
+The authors claimed that the SVD is not necessary and that a Cholesky decomposition can be used instead; we were not able to reproduce their result on Rubin data without an SVD.
+More recently, \citet[hereafter Y26]{2026AJ....171..238Y} also observed a pure $E$-mode pattern in astrometric residuals, but did not follow the path of F21, L21, or G25 and left the correction for further analyses.
 
-This is the Rubin Observatory overview paper: \citet{2019ApJ...873..111I}.
+Although these corrections improve the global astrometric solution of DES and HSC, they are not as important for those surveys as they are for the Rubin Observatory.
+Indeed, the amount of $E$-mode power introduced in a single image scales with the inverse of the square root of the exposure time, which explains why HSC shows a better overall performance than DES: the typical exposure time was 270\,s for HSC, compared with 90\,s for DES.
+The Rubin Observatory has set its exposure time to 30\,s, and L21 predicted that, if what was observed on HSC is rescaled to the Rubin exposure time, a variance of $270\,\mathrm{mas}^2$ should be observed.
+This can now be verified, as the first batch of data of the Rubin Observatory has been published as Data Preview 2 \citep[DP2;][]{10.71929/rubin/3382528}, and we will show that the observed $E$-mode is slightly higher than what L21 anticipated.
+
+In this paper, we present how atmospheric turbulence actually affects the astrometric performance, leveraging the DP2 data set of the Rubin Observatory, and the strategy used to model it in the DP2 production, which is based on L21.
+The DP2 processing revealed the limitations of the method proposed in L21, and we decided, for future processing, to follow the road paved by G25 and to introduce significant changes that improve the performance of all aspects of the algorithm for future data releases: the measured two-point correlation function is used directly as the kernel, the linear algebra is solved in Fourier space with a covariance that is positive semi-definite by construction, the field of view no longer needs to be split into patches, and the computing time and memory footprint fit within the budget of the Rubin production.
+We refer to this new model as TUrbulence Removal By fourier-Optimized Gaussian Process (TURBO-GP).
+
+The paper is structured as follows.
+Section~\ref{dataAndAstrometry} describes the data set and how the astrometric residual field is derived.
+Section~\ref{GPR} describes the basics of GPR, the L21 implementation used for DP2, and the new TURBO-GP algorithm.
+Section~\ref{Process} briefly describes the data processing.
+Section~\ref{Results} shows the overall performance of the L21 method and of TURBO-GP, assesses how well turbulence is under control in DP2, and shows how TURBO-GP will outperform the current methodology in future releases.
+We then discuss how the astrometric residual field correlates with actual properties of the Earth's atmosphere, and how static CCD defects can potentially be derived directly from the GPR corrections.
+
+\section{The Data Preview 2 and astrometric residuals}
+\label{dataAndAstrometry}
+
+TO DO 
+
+\section{Gaussian Process models}
+\label{GPR}
+
+TO DO
+
+\subsection{Basic intro to Gaussian Process}
+
+TO DO
+
+\subsection{L21 and DP2 implementation}
+
+TO DO
+
+\subsection{TUrbulence Removal By fourier-Optimized Gaussian Process}
+
+TO DO 
+
+\section{Data processing}
+\label{Process}
+
+TO DO 
+
+\section{Results}
+\label{Results}
+
+TO DO
+
+\subsection{On single visits of Rubin Observatory}
+
+TO DO 
+
+\subsection{Error rate}
+
+TO DO
+
+\subsection{Global results on DP2}
+
+TO DO 
+
+\subsection{Discussion}
+
+TO DO 
+
+\subsection{Correlation with atmospheric properties}
+
+TO DO 
+
+\subsection{On static defect from on sky measurement}
+
+TO DO 
+
+\section{Conclusion}
+\label{Conclusion}
+
+TO DO 
