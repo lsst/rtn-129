@@ -79,7 +79,6 @@ We refer to this new model as TUrbulence Removal By fourier-Optimized Gaussian P
 The paper is structured as follows.
 Section~\ref{dataAndAstrometry} describes the data set and how the astrometric residual field is derived.
 Section~\ref{GPR} describes the basics of GPR, the \citetalias{2021A&A...650A..81L} implementation used for DP2, and the new TURBO-GP algorithm.
-Section~\ref{Process} briefly describes the data processing.
 Section~\ref{Results} shows the overall performance of the \citetalias{2021A&A...650A..81L} method and of TURBO-GP, assesses how well turbulence is under control in DP2, 
 and shows how TURBO-GP will outperform the current methodology in future releases.
 We then discuss how the astrometric residual field correlates with actual properties of the Earth's atmosphere, and how static CCD defects can 
@@ -327,24 +326,58 @@ Representing a GP covariance through a regular grid with sparse local interpolat
 What is specific to TURBO-GP is the observation that the empirical kernel of \citetalias{2025AJ....170..361G} is band-limited on its own measurement grid, so that the grid representation, usually an approximation, is here essentially exact, and that positive semi-definiteness can be imposed once in Fourier space instead of being repaired for each visit.
 This is what allows the same kernel to be used over a full LSSTCam focal plane within the computing budget of the Rubin production, as quantified in Sect.~\ref{Results}.
 
-\section{Data processing}
-\label{Process}
-
-TO DO 
 
 \section{Results}
 \label{Results}
 
-TO DO
+\subsection{Time and memory performance on DP2}
+\label{sec:errorRate}
+
+We re-ran \citetalias{2021A&A...650A..81L} and TURBO-GP side by side on DP2 in order to compare them.
+We used the Batch Production System \citep{2022SPIE12189E..11J} at the SLAC Shared Scientific Data Facility (S3DF), the facility used to produce DP2 \citep{RTN-115}.
+Both \citetalias{2021A&A...650A..81L} and TURBO-GP are implemented in the \texttt{treegp} package and wrapped in the LSST Science Pipelines \citep{PSTN-019}, in the \texttt{drp\_tasks} package, through the \texttt{gaussianProcessesTurbulenceFit} task, so that comparing the two methods only requires changing one configuration parameter when the task is executed.
+For the reasons given in Sect.~\ref{dataAndAstrometry}, a visit may be processed several times when it overlaps several HEALPix regions; the numbers quoted below are per job, i.e., per (visit, HEALPix region) pair.
+
+The first improvement is on the error rate, defined as the number of jobs that did not complete over the total number of jobs.
+On DP2, \citetalias{2021A&A...650A..81L} shows an error rate of 5\%, while TURBO-GP shows an error rate of 1\%.
+This is explained mostly by failures of the hyperparameter minimization in \citetalias{2021A&A...650A..81L} (Sect.~\ref{sec:l21}), which lead to a kernel for which the Cholesky decomposition fails.
+Since this step is entirely removed in TURBO-GP, these failures no longer occur.
+
+We can then compare the computing time of the two methods; the distributions of the wall time per job are shown in Figure~\ref{time_computation}.
+There is an improvement of almost two orders of magnitude from \citetalias{2021A&A...650A..81L} to TURBO-GP, which brings the total wall time for DP2 from ${\sim}2.7$ years down to ${\sim}2$ weeks.
+The difference is explained by several factors.
+At training, there is no fit anymore: instead of computing the two-point correlation function several hundred times, as required by the bootstrap estimate of its covariance matrix, and then fitting the hyperparameters, the two-point correlation function is computed only once.
+At inference, there are two factors.
+First, because TURBO-GP is empirical, it only needs the tabulated two-point correlation function and no longer calls the von K\'arm\'an function, which is slow because of its Bessel function.
+Second, there is no Cholesky decomposition anymore: the $O(N^3)$ factorization is replaced by the conjugate-gradient solve of Eq.~\ref{eq:wgw}, whose iterations cost $O(N + N_g \log N_g)$, and the $O(MN)$ multiplication by the cross-covariance matrix is replaced by the single convolution of Eq.~\ref{eq:meanfield}, followed by a read-off whose cost is $O(M)$.
+
+Figure~\ref{memory_computation} presents the maximum memory usage during job execution.
+The memory usage is also significantly improved by TURBO-GP, which follows directly from never building the $N \times N$ covariance matrix and its factorization, nor the $M \times N$ cross-covariance matrix.
+However, there is a long tail at high memory usage where TURBO-GP and \citetalias{2021A&A...650A..81L} match.
+This is due to a design choice in the task.
+At the time of writing, \texttt{gaussianProcessesTurbulenceFit} loads in memory a table that contains the sources of all the visits of a given HEALPix region, and then selects the sources of the visit being processed; HEALPix regions with more visits therefore require more memory just to select one visit.
+When the task was developed for DP2, this choice minimized data manipulation, but it will not scale to future data releases, and it will be changed.
+
+Improving the memory usage and the computing time normally comes at the cost of a less accurate method.
+However, we show in the following subsections that, because TURBO-GP uses the empirical two-point correlation function at its root, it also improves how well atmospheric turbulence is described for astrometry.
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.6]{time}
+        \caption{\small Distribution of the wall time per job of the \texttt{gaussianProcessesTurbulenceFit} task on DP2, with one job per (visit, HEALPix region) pair, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP (blue). The legend gives the wall time summed over all jobs: 979 days for \citetalias{2021A&A...650A..81L} and 15 days for TURBO-GP.}
+        \label{time_computation}
+\end{figure*}
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.6]{memory}
+        \caption{\small Distribution of the maximum resident memory (max RSS) per job of the \texttt{gaussianProcessesTurbulenceFit} task on DP2, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP (blue). The bulk of the \citetalias{2021A&A...650A..81L} jobs peaks at ${\sim}7$\,GB, while the TURBO-GP jobs peak at ${\sim}1$--$2$\,GB. The common tail up to ${\sim}28$\,GB is due to the loading of the source table of the whole HEALPix region by the task (see text).}
+        \label{memory_computation}
+\end{figure*}
 
 \subsection{On single visits of Rubin Observatory}
 
 TO DO 
-
-\subsection{Error rate}
-\label{sec:errorRate}
-
-TO DO
 
 \subsection{Global results on DP2}
 
