@@ -376,13 +376,19 @@ However, we show in the following subsections that, because TURBO-GP uses the em
 \end{figure*}
 
 \subsection{On single visits of Rubin Observatory}
+\label{sec:singleVisit}
+
+We show the results on a single visit (visit 2025121400911) in Figure~\ref{2025121400911_L21} for the \citetalias{2021A&A...650A..81L} model used in the DP2 production and in Figure~\ref{2025121400911_L26} for TURBO-GP.
+While both \citetalias{2021A&A...650A..81L} and TURBO-GP describe the overall features of the residual field well, TURBO-GP visually describes the small-scale features better.
+This can be seen in the correlation functions of the corrected residuals: the overall astrometric residuals after GP modeling are smaller for TURBO-GP than for \citetalias{2021A&A...650A..81L}, by about 10\% in the variance of the $E$-mode.
+This is an example on a single visit, but we show in the next subsection that it generalizes to the full DP2 sample.
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.38]{2025121400911}
         \includegraphics[scale=0.38]{2025121400911_L21_predict}
         \includegraphics[scale=0.38]{2025121400911_L21_residuals}
-        \caption{\small TO DO }
+        \caption{\small Atmospheric turbulence modeling of visit 2025121400911 with the \citetalias{2021A&A...650A..81L} model used in the DP2 production. Top row: $x$ (left) and $y$ (center) components of the astrometric residuals (in mas) as a function of position in the focal plane (in mm), and their $E$-mode (blue) and $B$-mode (red) correlation functions as a function of angular separation (right); this visit is strongly affected by turbulence, with an $E$-mode variance of ${\sim}1700\,\mathrm{mas}^2$, about five times the DP2 average (Fig.~\ref{EBmode}). Middle row: GP prediction at the positions of the sources, with the same color scale, and the correlation functions of the prediction. Bottom row: residuals after subtraction of the GP prediction, with a color scale reduced by a factor of ${\sim}3$, and their correlation functions; note the change of vertical scale, the $E$-mode variance at the smallest separations going from ${\sim}1700$ to ${\sim}110\,\mathrm{mas}^2$.}
         \label{2025121400911_L21}
 \end{figure*}
 
@@ -392,47 +398,87 @@ However, we show in the following subsections that, because TURBO-GP uses the em
         \includegraphics[scale=0.38]{2025121400911}
         \includegraphics[scale=0.38]{2025121400911_L26_predict}
         \includegraphics[scale=0.38]{2025121400911_L26_residuals}
-        \caption{\small TO DO }
+        \caption{\small Same as Fig.~\ref{2025121400911_L21} for TURBO-GP, on the same visit and with the same training sample. The prediction (middle row) follows the small-scale features of the residual field more closely, and the $E$-mode variance of the corrected residuals at the smallest separations (bottom right) is ${\sim}95\,\mathrm{mas}^2$, about 10\% lower than with \citetalias{2021A&A...650A..81L}.}
         \label{2025121400911_L26}
 \end{figure*}
 
 \subsection{Global results on DP2}
+\label{sec:globalResults}
+
+For the 28\,517 visits in common between the DP2 \citetalias{2021A&A...650A..81L} run and TURBO-GP, we compute the $E$- and $B$-mode correlation functions of the astrometric residuals corrected with the respective GP model, and we average these correlation functions over the 28\,517 visits.
+The results are presented in Figure~\ref{EBmode_residuals}.
+Both \citetalias{2021A&A...650A..81L} and TURBO-GP remove ${\sim}90\%$ of the variance introduced by the atmosphere (Fig.~\ref{EBmode}), but the residual variance of TURBO-GP is 30\% lower in $E$-mode and 40\% lower in $B$-mode than that of \citetalias{2021A&A...650A..81L}.
+So even if \citetalias{2021A&A...650A..81L} was already doing a good job at keeping atmospheric turbulence under control, TURBO-GP improves the description of the atmosphere, at a lower cost in time and memory, and with a description of the spatial correlation that is measured directly from the data rather than imposed by a parametric kernel.
+
+There is still some remaining spatial correlation at angular scales well below the size of a CCD itself, and we discuss one potential candidate in Sect.~\ref{static_CCD}.
+But before that, we discuss the correlation of the astrometric residuals with image quality.
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.6]{EBmodeResiduals_zoom}
-        \caption{\small TO DO }
+        \caption{\small $E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals after correction of the atmospheric turbulence, averaged over the 28\,517 DP2 visits, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (triangles) and for TURBO-GP (crosses). Compared with the ${\sim}340\,\mathrm{mas}^2$ of $E$-mode variance before correction (Fig.~\ref{EBmode}), the residual $E$-mode variance at the smallest separations is ${\sim}39\,\mathrm{mas}^2$ for \citetalias{2021A&A...650A..81L} and ${\sim}27\,\mathrm{mas}^2$ for TURBO-GP; the $B$-mode goes from ${\sim}30\,\mathrm{mas}^2$ to ${\sim}11$ and ${\sim}7\,\mathrm{mas}^2$, respectively. Beyond ${\sim}0.3^\circ$, both methods leave a floor of a few $\mathrm{mas}^2$ for \citetalias{2021A&A...650A..81L} and ${\sim}1\,\mathrm{mas}^2$ for TURBO-GP.}
         \label{EBmode_residuals}
 \end{figure*}
 
 
 \subsection{Discussion}
+\label{sec:discussion}
 
-TO DO 
+We use this discussion to examine the correlation of the astrometric residuals with image quality, and what remains to be modeled in the spatially structured astrometric distortions.
 
 \subsection{Correlation with image quality}
+\label{sec:imageQuality}
+
+Throughout the period covered by the DP2 data set, a major focus of the Rubin Observatory team was to bring the image quality (IQ) under control, in particular through the Active Optics System (AOS).
+The complication with IQ is that it is unclear whether the PSF is driven by optical misalignments or by atmospheric turbulence, and breaking the degeneracy between the two is a well-known challenge.
+
+The advantage of the analysis presented here with the astrometric residuals is that they are unambiguously driven by the atmosphere alone: the optical distortions are taken into account by the astrometric model, and the residuals are mostly $E$-mode, which indicates that the astrometric shifts follow the gradient of the spatial variations of the refractive index integrated along the line of sight (Sect.~\ref{intro}).
+In short, they are a clean signature of what is going on in the atmosphere.
+
+As far as we know, a cross-correlation between astrometric residuals and image quality has never been observed for a ground-based optical wide-field telescope.
+To do so, we compute for every visit the standard deviation of the $E$-mode of the astrometric residuals, the median FWHM of the PSF, and the median value of $z_4$ over the four wavefront measurements of the AOS.
+In the Noll ordering of the Zernike polynomials, $z_4$ is the defocus term; we look only at this coefficient because it is the one that corresponds to the focus of the telescope and is expected to correlate directly with the PSF FWHM.
+Figure~\ref{psf_vs_emode} shows the PSF FWHM as a function of the standard deviation of the $E$-mode (colored by the median $z_4$), and Figure~\ref{psf_vs_z4} shows the PSF FWHM as a function of $z_4$ (colored by the standard deviation of the $E$-mode).
+
+Figure~\ref{psf_vs_emode} shows a clear correlation between the PSF FWHM and the standard deviation of the $E$-mode of the astrometric residuals.
+This shows that, as expected, a major driver of the PSF FWHM is atmospheric turbulence.
+Figure~\ref{psf_vs_z4} shows the expected parabola between the PSF FWHM and the focus, but a large part of the scatter around it correlates with the standard deviation of the $E$-mode, which is evidence that this scatter is driven by atmospheric turbulence.
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.6]{psf_vs_emode}
-        \caption{\small TO DO }
+        \caption{\small Median PSF FWHM (in arcsec) of each DP2 visit as a function of the standard deviation of the $E$-mode of its astrometric residuals (in mas), colored by the median defocus Zernike coefficient $z_4$ (in $\mu$m) measured by the AOS. The PSF FWHM correlates with the $E$-mode of the astrometric residuals, i.e., with the strength of the atmospheric turbulence, independently of the focus.}
         \label{psf_vs_emode}
 \end{figure*}
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.6]{psf_vs_z4}
-        \caption{\small TO DO }
+        \caption{\small Median PSF FWHM (in arcsec) of each DP2 visit as a function of the median defocus Zernike coefficient $z_4$ (in $\mu$m) measured by the AOS, colored by the standard deviation of the $E$-mode of the astrometric residuals (in mas). The parabolic dependence of the PSF FWHM on the focus is visible, and the scatter above the parabola is populated by the visits with a high $E$-mode, i.e., a strong atmospheric turbulence.}
         \label{psf_vs_z4}
 \end{figure*}
 
-\subsection{On static defect from on sky measurement}
+\subsection{On static defects from on-sky measurements}
+\label{static_CCD}
+
+\citet{2014JInst...9C4001P} and \citetalias{2021A&A...650A..81L} showed that static distortions introduced by CCD features such as tree rings can be observed directly from on-sky measurements, and in the same spirit we can do the same here.
+After correcting for atmospheric turbulence with TURBO-GP, we bin every sensor of LSSTCam in super-pixels of $10 \times 10$ pixels and compute a clipped median of the corrected residuals across all the visits of DP2.
+Results for one CCD of each kind (ITL and E2V) are displayed in Figure~\ref{ITL_detector_1} (detector 1, ITL) and Figure~\ref{E2V_detector_97} (detector 97, E2V).
+
+Both detectors exhibit the expected features.
+Both the ITL and the E2V sensors show tree rings, and in addition, as was measured with artificial stars by \citet{2023PASP..135k5003E}, the imprint of the mechanical support of the ITL sensor is clearly visible.
+The ITL sensor exhibits typical systematic shifts of 4\,mas, while the E2V sensor exhibits shifts of 1--2\,mas, which can explain part of the spatial correlation remaining after the atmospheric turbulence is properly modeled with TURBO-GP (Fig.~\ref{EBmode_residuals}).
+
+At the time of writing, these effects are not yet corrected, as was done for example for DES \citep{2014JInst...9C4001P, 2014PASP..126..750P}.
+The way to do it would in principle be to derive the correction from the flat fields, as was done for DES.
+But, as we can see, it can also be derived directly from on-sky measurements once atmospheric turbulence has been corrected.
+We leave this for further analysis, but this is the clear remaining path to improve the astrometric precision of LSSTCam for the Rubin Observatory.
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.38]{dx_ccd_10_1_median_clipped_pixel}
         \includegraphics[scale=0.38]{dy_ccd_10_1_median_clipped_pixel}
-        \caption{\small TO DO }
+        \caption{\small Static astrometric residuals of detector 1 (ITL) in its pixel coordinates: clipped median, across all the DP2 visits, of the astrometric residuals corrected for atmospheric turbulence with TURBO-GP, in super-pixels of $10 \times 10$ pixels, for the $x$ (left) and $y$ (right) components (in mas). Concentric tree rings centered on the upper-left corner of the sensor are visible, together with oblique stripes that we associate with the mechanical support of the sensor (see text) and a discontinuity at the mid-line of the sensor ($y \simeq 2000$ pixels), which separates its two rows of amplifiers. The typical amplitude of these features is 4\,mas.}
         \label{ITL_detector_1}
 \end{figure*}
 
@@ -440,7 +486,7 @@ TO DO
         \centering
         \includegraphics[scale=0.38]{dx_ccd_10_97_median_clipped_pixel}
         \includegraphics[scale=0.38]{dy_ccd_10_97_median_clipped_pixel}
-        \caption{\small TO DO }
+        \caption{\small Same as Fig.~\ref{ITL_detector_1} for detector 97 (E2V). Tree rings centered on the upper-right corner of the sensor are visible, with an amplitude of 1--2\,mas, i.e., a factor of 2--4 smaller than on the ITL sensor, together with the discontinuity at the mid-line of the sensor.}
         \label{E2V_detector_97}
 \end{figure*}
 
@@ -448,4 +494,22 @@ TO DO
 \section{Conclusion}
 \label{Conclusion}
 
-TO DO 
+We have used the 28\,517 visits of the Rubin Observatory Data Preview 2 with a successful atmospheric turbulence fit to characterize how atmospheric turbulence affects the astrometry of LSSTCam.
+Once the optical distortions are fit by the astrometric model, the residual displacement field is dominated by the $E$-mode, with a variance of ${\sim}340\,\mathrm{mas}^2$, ten times higher than what was observed with HSC and three times higher than with DES.
+This is slightly above the $270\,\mathrm{mas}^2$ that \citetalias{2021A&A...650A..81L} forecast by rescaling the HSC measurement to the 30\,s exposure time of the Rubin Observatory, and it makes the correction of atmospheric turbulence more important for the Rubin Observatory than for any previous wide-field survey.
+
+The DP2 production corrected this field with the Gaussian process of \citetalias{2021A&A...650A..81L}, with a sheared von K\'arm\'an kernel whose hyperparameters are fit to the measured two-point correlation function.
+This method removes ${\sim}90\%$ of the variance introduced by the atmosphere, but the production revealed its limitations: the shape of the kernel is a choice that does not capture all the structure of the measured correlation function, the hyperparameter fit fails on a fraction of the visits, and the evaluation of the von K\'arm\'an kernel is slow.
+Following \citetalias{2025AJ....170..361G}, TURBO-GP uses the measured two-point correlation function directly as the kernel, so that there are no hyperparameters and nothing to fit.
+The new element is the way the linear algebra is solved: the covariance is represented on a regular grid of the focal plane, the kernel is applied by fast Fourier transform, positive semi-definiteness is imposed once in Fourier space rather than repaired for each visit with an $O(N^3)$ decomposition, the linear system is solved by conjugate gradient, and the prediction is computed once as a field over the whole focal plane.
+As a result, there is no need to divide the field of view into patches, and one Gaussian process per component is fit over the whole LSSTCam focal plane.
+Both methods are implemented in \texttt{treegp} and in the LSST Science Pipelines, and switching from one to the other only requires changing one configuration parameter.
+
+On DP2, TURBO-GP reduces the error rate of the turbulence-fitting task from 5\% to 1\%, the total wall time from ${\sim}2.7$ years to ${\sim}2$ weeks, and the typical memory usage per job from ${\sim}7$\,GB to ${\sim}1$--$2$\,GB.
+This improvement in cost does not come with a loss of accuracy: on the same training samples, the astrometric residuals corrected with TURBO-GP have, averaged over DP2, an $E$-mode variance 30\% lower and a $B$-mode variance 40\% lower than those corrected with the \citetalias{2021A&A...650A..81L} model of the DP2 production.
+TURBO-GP is therefore the method we intend to use for future data releases, and the larger training samples it makes affordable remain to be explored.
+
+The astrometric residuals corrected in this way also turn out to be a clean probe of the atmosphere.
+Across DP2, the standard deviation of the $E$-mode of the astrometric residuals correlates with the PSF FWHM, and it explains a large part of the scatter of the PSF FWHM around its expected parabolic dependence on the focus; to our knowledge, this is the first time such a correlation is observed for a ground-based optical wide-field telescope.
+Finally, once atmospheric turbulence is removed, the residuals averaged over all the visits of DP2 in the pixel coordinates of each sensor reveal the static distortions of LSSTCam: tree rings on both the ITL and the E2V sensors, and the imprint of the mechanical support of the ITL sensors, with typical amplitudes of 4\,mas for ITL and 1--2\,mas for E2V.
+These static distortions are not yet corrected in the Rubin astrometric model and account for part of the spatial correlation left at small scales; deriving their correction, from flat fields or directly from these on-sky measurements, is the clear next step to improve the astrometric precision of the Rubin Observatory.
