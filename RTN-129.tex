@@ -3,11 +3,25 @@
 % Author guide:
 %   https://journals.aas.org/aastexguide/
 
-\documentclass[modern]{aastex701}
+\documentclass[modern, linenumbers, amsmath]{aastex701}
+%\documentclass[modern]{aastex701}
 
 % Package imports go here.
+\usepackage{amsmath}
 
 % Local commands go here.
+% Placeholders used while drafting (bold blue in the PDF). \REF{hint} marks a
+% citation still to be resolved; \TODO{note} marks an author note. Both must
+% be gone before the document is finalized.
+\newcommand{\REF}[1]{\textcolor{blue}{\textbf{[REF: #1]}}}
+\newcommand{\TODO}[1]{\textcolor{blue}{\textbf{[TODO: #1]}}}
+% Short names for frequently cited papers (hyperlinked via \citetalias).
+\defcitealias{2017PASP..129g4503B}{B17}
+\defcitealias{DMTN-266}{S24}
+\defcitealias{2021AJ....162..106F}{F21}
+\defcitealias{2021A&A...650A..81L}{L21}
+\defcitealias{2025AJ....170..361G}{G25}
+\defcitealias{2026AJ....171..238Y}{Y26}
 \newcommand{\docRef}{RTN-129}
 \newcommand{\docUpstreamLocation}{\url{https://github.com/lsst/rtn-129}}
 
@@ -41,7 +55,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Use this command to indicate a subdirectory where figures are located.
-%%\graphicspath{{./}{figures/}}
+\graphicspath{{./}{figures/}}
 
 
 \begin{document}
@@ -73,6 +87,8 @@
 \begin{acknowledgments}
 This material is based upon work supported in part by the National Science Foundation through Cooperative Agreements AST-1258333 and AST-2241526 and Cooperative Support Agreements AST-1202910 and AST-2211468 managed by the Association of Universities for Research in Astronomy (AURA), and the Department of Energy under Contract No.\ DE-AC02-76SF00515 with the SLAC National Accelerator Laboratory managed by Stanford University.
 Additional Rubin Observatory funding comes from private donations, grants to universities, and in-kind support from LSST-DA Institutional Members.
+
+AI tools were used to generate part of the code used in this research (the \texttt{treegp} implementation of TURBO-GP and its integration in the LSST Science Pipelines) and for refining, correcting, editing, and formatting the manuscript to improve the clarity of the language. The GAI tool used was Claude Fable \citep[versions 5.0 and 5.1;][]{anthropic2026fable}. Responsibility for the final manuscript, the code, and the results lies entirely with the authors.
 \end{acknowledgments}
 
 %% To help institutions obtain information on the effectiveness of their
