@@ -216,13 +216,11 @@ The mean is obtained in two steps.
 First, a vector of weights $\boldsymbol{\alpha}$, one per training source, is computed from the training sample alone by solving the linear system}
 \begin{equation}
 \label{eq:alpha}
-\color{blue}
 \mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}, \qquad \text{i.e.} \qquad \boldsymbol{\alpha} = \mathbf{C}^{-1}\, \mathbf{y} .
 \end{equation}
 \NEW{Second, the field is interpolated at the positions $\mathbf{X}'$ as}
 \begin{equation}
 \label{eq:gpmean}
-\color{blue}
 \mathbf{y}' = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \boldsymbol{\alpha}, \qquad \text{i.e.} \qquad
 y'(\mathbf{X}') = \sum_{j=1}^{N} \alpha_j\, \xi(\mathbf{X}' - \mathbf{X}_j),
 \end{equation}
@@ -415,7 +413,6 @@ The covariance between two grid nodes depends only on their separation, so the c
 defined on the nodes, is the convolution of that image by the kernel image,}
 \begin{equation}
 \label{eq:G}
-\color{blue}
 (\mathbf{G}\, \mathbf{f})_m = \sum_{n} \xi(\mathbf{g}_m - \mathbf{g}_n)\, f_n = (\boldsymbol{\kappa} \ast \mathbf{f})_m ;
 \end{equation}
 \NEW{the image to which it is applied below is $\mathbf{W}^T \mathbf{v}$, the values of a vector $\mathbf{v}$ defined on the sources deposited on
@@ -445,43 +442,48 @@ The per-visit $O(N^3)$ decomposition of \citetalias{2025AJ....170..361G} is not 
 
 The linear system $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ of Eq.~\NEW{\ref{eq:alpha}} is solved without ever storing $\mathbf{C}$, with the conjugate
 gradient method \citep{hestenes1952} and a diagonal (Jacobi) preconditioner.
-\NEW{The only operation the method needs is the product of $\mathbf{C}$ by a vector defined on the sources, one value per training source like
-the data $\mathbf{y}$ themselves.
-The first such product is $\mathbf{C}\, \mathbf{y}$, which by Eq.~\ref{eq:wgw} is}
+\NEW{Equation~\ref{eq:alpha} is the question: find the weights $\boldsymbol{\alpha}$ such that $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$.
+The direct answer, building the $N \times N$ matrix $\mathbf{C}$ and factorizing it, is what the dense approach does.
+The conjugate gradient never needs the matrix itself; it only needs the answer to one question, asked repeatedly: given some vector $\mathbf{v}$
+with one number per training source, what is $\mathbf{C}\, \mathbf{v}$?
+By Eq.~\ref{eq:wgw}, this product is}
 \begin{equation}
 \label{eq:matvec}
-\color{blue}
-\mathbf{C}\, \mathbf{y} = \mathbf{W}\, \mathbf{F}^{-1}\, \mathrm{diag}(\hat{P}_k)\, \mathbf{F}\, \mathbf{W}^T \mathbf{y} + \mathbf{D}\, \mathbf{y} ,
+\mathbf{C}\, \mathbf{v} = \mathbf{W}\, \mathbf{F}^{-1}\, \mathrm{diag}(\hat{P}_k)\, \mathbf{F}\, \mathbf{W}^T \mathbf{v} + \mathbf{D}\, \mathbf{v} ,
 \end{equation}
-\NEW{to be read from right to left as four steps, shown on a real visit in Fig.~\ref{fig:turbogp_matvec}.
-First, the grid is filled: the residual $y_i$ of each source is deposited on the four nodes that surround it, multiplied by its bilinear weights,
-which gives the image $\mathbf{W}^T \mathbf{y}$ of the grid, zero away from the sources (Fig.~\ref{fig:turbogp_matvec}a).
+\NEW{to be read from right to left as four steps, shown on a real visit in Fig.~\ref{fig:turbogp_matvec} for $\mathbf{v} = \mathbf{y}$.
+First, the grid is filled: the value $v_i$ of each source is deposited on the four nodes that surround it, multiplied by its bilinear weights,
+which gives the image $\mathbf{W}^T \mathbf{v}$ of the grid, zero away from the sources (Fig.~\ref{fig:turbogp_matvec}a).
 Second, this image is convolved by the kernel image through the padded grid, i.e., zero-padded, Fourier transformed, multiplied mode by mode
-by $\hat{P}_k$, which is what $\mathrm{diag}(\hat{P}_k)$ does, and transformed back: the result is the field that the values $\mathbf{y}$ placed at the
+by $\hat{P}_k$, which is what $\mathrm{diag}(\hat{P}_k)$ does, and transformed back: the result is the field that the values $\mathbf{v}$ placed at the
 training positions would produce at every node of the grid, as in the right-hand side of Eq.~\ref{eq:gpmean} (Fig.~\ref{fig:turbogp_matvec}b,c).
 Third, this field is read back at the position of each source by bilinear interpolation between the four nodes that surround it, i.e.,
-multiplied by $\mathbf{W}$, which gives the value of $\mathbf{K}\, \mathbf{y}$ at the sources.
-Fourth, the noise term $\sigma_i^2 y_i$ is added (Fig.~\ref{fig:turbogp_matvec}d).
-The same four steps are then applied, at every later iteration, to the current search direction of the conjugate gradient in place of $\mathbf{y}$,
-and the prediction (Eq.~\ref{eq:meanfield} below) is the first two steps applied to the weights $\boldsymbol{\alpha}$.}
+multiplied by $\mathbf{W}$, which gives the value of $\mathbf{K}\, \mathbf{v}$ at the sources.
+Fourth, the noise term $\sigma_i^2 v_i$ is added (Fig.~\ref{fig:turbogp_matvec}d).
+The vector $\mathbf{v}$ is anything with one number per training source: the data $\mathbf{y}$ in Fig.~\ref{fig:turbogp_matvec}, the successive
+search directions of the solve described below, or the weights $\boldsymbol{\alpha}$ at prediction time (Eq.~\ref{eq:meanfield}).}
 Each iteration \NEW{therefore costs} one spreading on the grid, one pair of fast Fourier transforms, one
 interpolation back to the sources, and one multiplication by $\mathbf{D}$: $O(N + N_g \log N_g)$ operations and $O(N + N_g)$ memory, instead of $O(N^3)$ and $O(N^2)$.
-\NEW{The iterations start from $\boldsymbol{\alpha}_0 = 0$, so that the initial residual $\mathbf{r}_0 = \mathbf{y} - \mathbf{C}\, \boldsymbol{\alpha}_0$
-is the data vector itself, and from the search direction $\mathbf{p}_0 = \mathbf{M}^{-1} \mathbf{r}_0$, where
-$\mathbf{M} = \mathrm{diag}(\xi(0) + \sigma_i^2)$ is the diagonal of $\mathbf{C}$: the preconditioned residual is the solution that would be obtained
-if the sources were uncorrelated, each measurement divided by its total variance.
-Each iteration then applies $\mathbf{C}$ once (the four steps of Eq.~\ref{eq:matvec}), to the current direction $\mathbf{p}$, and takes the step along it that minimizes the error,
-$a = (\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}) / (\mathbf{p}^T \mathbf{C}\, \mathbf{p})$, so that $\boldsymbol{\alpha} \leftarrow \boldsymbol{\alpha} + a\, \mathbf{p}$
-and $\mathbf{r} \leftarrow \mathbf{r} - a\, \mathbf{C}\, \mathbf{p}$; the next trial direction is the new preconditioned residual made conjugate to
-the previous direction, $\mathbf{p} \leftarrow \mathbf{M}^{-1} \mathbf{r} + b\, \mathbf{p}$ with $b$ the ratio of the new to the old value
-of $\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}$, so that successive directions are $\mathbf{C}$-orthogonal and the error decreases monotonically
-\citep[see][for a derivation]{shewchuk1994}.
-Figure~\ref{fig:turbogp_cg} shows what this does on a real visit: the residual decreases by seven orders of magnitude in 139 iterations with the
-preconditioner and 182 without, and the field predicted from the current weights is visually final after ten iterations, the remaining ones
-adjusting details below the measurement noise.}
-The iterations stop \NEW{when the norm of the residual falls below $10^{-7}$ times the norm of $\mathbf{y}$, a fixed relative tolerance},
-so that the solution is deterministic; their number grows with the ratio of the variance of the
-field to the measurement noise, and is of the order of a hundred on the DP2 data\NEW{, far from the cap of 500 iterations}.
+\NEW{The solve is a guess-and-correct loop built on this product.
+It starts from the guess $\boldsymbol{\alpha}_0 = 0$, whose mismatch, the residual $\mathbf{r}_0 = \mathbf{y} - \mathbf{C}\, \boldsymbol{\alpha}_0$,
+is the data vector itself, and picks a direction $\mathbf{p}_0 = \mathbf{M}^{-1} \mathbf{r}_0$ along which to improve the guess, where
+$\mathbf{M} = \mathrm{diag}(\xi(0) + \sigma_i^2)$ is the diagonal of $\mathbf{C}$: $\mathbf{p}_0$ is $\mathbf{y}$ with each star's value divided by its own total variance,
+which is the solution one would obtain if the sources were uncorrelated.
+Each iteration then asks Eq.~\ref{eq:matvec} once, for $\mathbf{C}\, \mathbf{p}$, which gives the length of the step along $\mathbf{p}$ that minimizes
+the error, $a = (\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}) / (\mathbf{p}^T \mathbf{C}\, \mathbf{p})$, and the updates
+$\boldsymbol{\alpha} \leftarrow \boldsymbol{\alpha} + a\, \mathbf{p}$ and $\mathbf{r} \leftarrow \mathbf{r} - a\, \mathbf{C}\, \mathbf{p}$; the next direction
+is the new preconditioned residual made conjugate to the previous direction, $\mathbf{p} \leftarrow \mathbf{M}^{-1} \mathbf{r} + b\, \mathbf{p}$ with $b$ the
+ratio of the new to the old value of $\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}$, so that successive directions are $\mathbf{C}$-orthogonal and the error
+decreases monotonically \citep[see][for a derivation]{shewchuk1994}.
+The loop stops when the norm of the residual falls below $10^{-7}$ times the norm of $\mathbf{y}$, a fixed relative tolerance, so that the solution is
+deterministic: at that point $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ to that precision, and Eq.~\ref{eq:alpha} is solved.
+Figure~\ref{fig:turbogp_cg} shows the loop on a real visit, where each point of the residual curve is one call to Eq.~\ref{eq:matvec}: the residual
+decreases by seven orders of magnitude in 139 iterations with the preconditioner and 182 without, and the field predicted from the current weights
+is visually final after ten iterations, the remaining ones adjusting details below the measurement noise.
+Conversely, Eq.~\ref{eq:matvec} applied to the final $\boldsymbol{\alpha}$ returns the data $\mathbf{y}$ (Fig.~\ref{fig:turbogp_matvec}e,f), which is
+what solving Eq.~\ref{eq:alpha} means.}
+The number of iterations grows with the ratio of the variance of the field to the measurement noise, and is of the order of a hundred on the DP2
+data\NEW{, far from the cap of 500 iterations}.
 
 \begin{figure*}
         \centering
@@ -495,7 +497,9 @@ field to the measurement noise, and is of the order of a hundred on the DP2 data
         the black square is the zoom of panel a): the field that the values $\mathbf{y}$ placed at the sources would produce everywhere.
         (d) Steps 3 and 4: the field read back at the sources by bilinear interpolation, $\mathbf{K}\, \mathbf{y}$, plus the noise term $\sigma_i^2 y_i$,
         which gives $\mathbf{C}\, \mathbf{y}$. The whole product takes ${\sim}30$~ms. Since $\mathbf{y}$ is in mas and $\mathbf{C}$ in mas$^2$, panels c
-        and d are in mas$^3$.}}
+        and d are in mas$^3$. (e) The same four steps applied to the weights $\boldsymbol{\alpha}$ returned by the solve of Eq.~\ref{eq:alpha},
+        $\mathbf{C}\, \boldsymbol{\alpha}$, and (f) the data $\mathbf{y}$: they agree to the $10^{-7}$ tolerance of the solve, which is what solving
+        Eq.~\ref{eq:alpha} means.}}
         \label{fig:turbogp_matvec}
 \end{figure*}
 

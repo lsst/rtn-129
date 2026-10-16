@@ -313,7 +313,8 @@ def fig_kernel(opt, l21, comp, out):
 
 
 def fig_matvec(eng, X, y, sig, comp, out):
-    """The four steps of C y: spread on the grid, convolve, read back, add the noise."""
+    """The four steps of C y: spread on the grid, convolve, read back, add the noise;
+    then the same steps applied to alpha, which give y back."""
     w = eng._w_train
     t0 = time.time()
     img = (w.T @ y).reshape(eng._ny, eng._nx)
@@ -330,7 +331,7 @@ def fig_matvec(eng, X, y, sig, comp, out):
         f"|D y| max {np.abs(sig**2 * y).max():.3g} mas^3"
     )
 
-    fig, axes = plt.subplots(2, 2, figsize=(7.2, 6.2), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(7.2, 4.4), constrained_layout=True)
     # (a) zoom on the grid around the field centre: W^T y and the stars
     nz = int(round(ZOOM_DEG / h))
     cx, cy = 0.5 * (X[:, 0].min() + X[:, 0].max()), 0.5 * (
@@ -357,7 +358,7 @@ def fig_matvec(eng, X, y, sig, comp, out):
         zoom,
         ext,
         zv,
-        f"(a) step 1: $\\mathbf{{W}}^T\\mathbf{{y}}$ on the grid, {ZOOM_DEG}° zoom ({inside.sum()} stars)",
+        f"(a) step 1: $\\mathbf{{W}}^T\\mathbf{{y}}$, {ZOOM_DEG}° zoom ({inside.sum()} stars)",
         cbar_label=r"$\mathbf{W}^T\mathbf{y}$ (mas)",
     )
     axes[0, 0].scatter(
@@ -387,7 +388,7 @@ def fig_matvec(eng, X, y, sig, comp, out):
         kimg,
         extk,
         np.abs(kimg).max(),
-        f"(b) the kernel image $\\kappa$ ({ks}$\\times${ks} nodes of {h * 3600:.0f}$''$)",
+        f"(b) kernel image $\\kappa$ ({ks}$\\times${ks} nodes of {h * 3600:.0f}$''$)",
         cbar_label=r"$\kappa$ (mas$^2$)",
     )
     axes[0, 1].set_xlabel(r"$\Delta u$ (deg)")
@@ -406,7 +407,7 @@ def fig_matvec(eng, X, y, sig, comp, out):
         disp,
         extf,
         zf,
-        f"(c) step 2: $\\kappa * \\mathbf{{W}}^T\\mathbf{{y}}$, whole grid (mean over {DS}$\\times${DS} nodes)",
+        f"(c) step 2: $\\kappa * \\mathbf{{W}}^T\\mathbf{{y}}$, whole grid ({DS}$\\times${DS} mean)",
         cbar_label=r"$\kappa * \mathbf{W}^T\mathbf{y}$ ($10^3$ mas$^3$)",
     )
     axes[1, 0].set_xlabel("u (deg)")
@@ -433,9 +434,7 @@ def fig_matvec(eng, X, y, sig, comp, out):
         linewidths=0,
         rasterized=True,
     )
-    axes[1, 1].set_title(
-        r"(d) steps 3-4: read back at the stars + noise: $\mathbf{C}\mathbf{y}$"
-    )
+    axes[1, 1].set_title(r"(d) steps 3-4: read back + noise = $\mathbf{C}\mathbf{y}$")
     axes[1, 1].set_xlabel("u (deg)")
     axes[1, 1].set_ylabel("v (deg)")
     axes[1, 1].set_aspect("equal")
@@ -444,6 +443,50 @@ def fig_matvec(eng, X, y, sig, comp, out):
     cb = plt.colorbar(sc, ax=axes[1, 1], fraction=0.046, pad=0.03)
     cb.set_label(r"$\mathbf{C}\mathbf{y}$ ($10^3$ mas$^3$)")
     cb.ax.tick_params(labelsize=6)
+    # (e) the same four steps applied to alpha give the data back; (f) the data
+    alpha = eng._alpha
+    Ca = (
+        w @ eng._convolve((w.T @ alpha).reshape(eng._ny, eng._nx)).ravel()
+        + sig**2 * alpha
+    )
+    print(
+        f"  C alpha vs y: max |C alpha - y| {np.abs(Ca - y).max():.2e} mas, "
+        f"relative rms {np.linalg.norm(Ca - y) / np.linalg.norm(y):.1e}"
+    )
+    for ax, vals, title, lab in (
+        (
+            axes[0, 2],
+            Ca,
+            r"(e) the same steps on $\boldsymbol{\alpha}$: $\mathbf{C}\boldsymbol{\alpha}$",
+            r"$\mathbf{C}\boldsymbol{\alpha}$ (mas)",
+        ),
+        (
+            axes[1, 2],
+            y,
+            r"(f) the data $\mathbf{y}$: identical to (e)",
+            r"$\mathbf{y}$ (mas)",
+        ),
+    ):
+        sc = ax.scatter(
+            X[:, 0],
+            X[:, 1],
+            c=vals,
+            s=1.2,
+            cmap=CMAP,
+            vmin=-zv,
+            vmax=zv,
+            linewidths=0,
+            rasterized=True,
+        )
+        ax.set_title(title)
+        ax.set_xlabel("u (deg)")
+        ax.set_ylabel("v (deg)")
+        ax.set_aspect("equal")
+        ax.set_xlim(extf[0], extf[1])
+        ax.set_ylim(extf[2], extf[3])
+        cb = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.03)
+        cb.set_label(lab)
+        cb.ax.tick_params(labelsize=6)
     path = os.path.join(out, "turbogp_matvec.pdf")
     fig.savefig(path)
     plt.close(fig)
