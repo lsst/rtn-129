@@ -210,20 +210,33 @@ The covariance matrix of these measurements is
 C_{ij} = \xi(\mathbf{X}_i - \mathbf{X}_j) + \delta_{ij}\,\sigma_i^2 , \qquad \text{i.e.} \qquad \mathbf{C} = \mathbf{K} + \mathbf{D},
 \end{equation}
 where $\mathbf{K}$ is the covariance due to the turbulence field and $\mathbf{D} = \mathrm{diag}(\sigma_i^2)$ is the measurement noise.
-Because everything is Gaussian, the values $\mathbf{y}'$ of the field at any other set of positions $\mathbf{X}'$ are also Gaussian once the 
-measurements are known, with mean and covariance \citepalias[see also][Eqs.~8 and 10]{2021A&A...650A..81L}
+Because everything is Gaussian, the values $\mathbf{y}'$ of the field at any other set of positions $\mathbf{X}'$ are also Gaussian once the
+measurements are known, with mean and covariance \citepalias[see also][Eqs.~8 and 10]{2021A&A...650A..81L}\NEW{.
+The mean is obtained in two steps.
+First, a vector of weights $\boldsymbol{\alpha}$, one per training source, is computed from the training sample alone by solving the linear system}
+\begin{equation}
+\label{eq:alpha}
+\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}, \qquad \text{i.e.} \qquad \boldsymbol{\alpha} = \mathbf{C}^{-1}\, \mathbf{y} .
+\end{equation}
+\NEW{Second, the field is interpolated at the positions $\mathbf{X}'$ as}
 \begin{equation}
 \label{eq:gpmean}
-\mathbf{y}' = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \mathbf{C}^{-1}\, \mathbf{y},
+\mathbf{y}' = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \boldsymbol{\alpha}, \qquad \text{i.e.} \qquad
+y'(\mathbf{X}') = \sum_{j=1}^{N} \alpha_j\, \xi(\mathbf{X}' - \mathbf{X}_j),
 \end{equation}
+\NEW{and its covariance is}
 \begin{equation}
 \label{eq:gpcov}
 \mathrm{Cov}(\mathbf{y}') = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X}') - \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \mathbf{C}^{-1}\, \boldsymbol{\Xi}(\mathbf{X}, \mathbf{X}'),
 \end{equation}
 where $\boldsymbol{\Xi}(\mathbf{A}, \mathbf{B})_{ij} = \xi(\mathbf{A}_i - \mathbf{B}_j)$.
-Equation~\ref{eq:gpmean} is the GP prediction and Eq.~\ref{eq:gpcov} its uncertainty.
-The prediction is a linear combination of the measured values: each training source contributes with a weight that is 
-large when it is strongly correlated with the target position and well measured, and the matrix $\mathbf{C}^{-1}$ accounts for the 
+\NEW{Equations~\ref{eq:alpha} and \ref{eq:gpmean} together are the GP prediction, and Eq.~\ref{eq:gpcov} its uncertainty.
+The two steps are the two steps of the algorithm: the linear system of Eq.~\ref{eq:alpha} is solved once per visit and per component,
+and Eq.~\ref{eq:gpmean} is then evaluated at as many positions as needed without solving anything again.
+Written as in the right-hand side of Eq.~\ref{eq:gpmean}, the prediction is the convolution of the kernel $\xi$ with the weights $\alpha_j$
+placed at the training positions, a form that is used in Sect.~\ref{sec:turbogp}.}
+The prediction is a linear combination of the measured values: each training source contributes with a weight that is
+large when it is strongly correlated with the target position and well measured, and the matrix $\mathbf{C}^{-1}$ accounts for the
 redundancy between neighboring training sources.
 Without measurement noise, the prediction at a training position is the measured value itself; with noise, the GP smooths the data by 
 the amount that the correlation function and the noise allow.
@@ -240,8 +253,8 @@ function, for instance the noisy measured two-point correlation function or a sp
 is the reason why \citetalias{2021A&A...650A..81L} chose a parametric kernel, and the central difficulty of using the measured 
 correlation function directly, to which we come back in Sect.~\ref{sec:turbogp}.
 Second, the computing cost.
-$\mathbf{C}$ is an $N \times N$ matrix, and the standard way of applying $\mathbf{C}^{-1}$ is a Cholesky factorization, which 
-takes $O(N^3)$ operations and $O(N^2)$ memory; the prediction at $M$ positions then requires the $M \times N$ cross-covariance 
+$\mathbf{C}$ is an $N \times N$ matrix, and the standard way of \NEW{solving Eq.~\ref{eq:alpha}} is a Cholesky factorization, which
+takes $O(N^3)$ operations and $O(N^2)$ memory; the prediction at $M$ positions \NEW{(Eq.~\ref{eq:gpmean})} then requires the $M \times N$ cross-covariance
 matrix $\boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})$, i.e., $O(NM)$ operations and memory.
 With $N \sim 10^4$ sources per visit, this is what limits the size of the training sample in production, and what 
 led \citetalias{2025AJ....170..361G} to split the DES field of view into patches.
@@ -314,6 +327,8 @@ First, the shape of the kernel is a choice.
 A single sheared von K\'arm\'an profile describes the dominant scale and orientation of the correlations, but the measured two-point correlation 
 function frequently shows more structure, such as several scales or orientations and negative lobes; this is visible in the residual 
 maps of \citetalias{2021A&A...650A..81L} (their Fig.~8).
+\NEW{Figure~\ref{fig:turbogp_kernel} (top row) shows it on a real LSSTCam visit: the measured map has sharper stripes than the fitted profile,
+and the difference between the two is a coherent pattern with an rms of ${\sim}27\,\mathrm{mas}^2$, for a variance of the field of ${\sim}170\,\mathrm{mas}^2$.}
 Whatever the kernel does not describe is left in the corrected residuals.
 Second, the hyperparameter fit is a non-linear minimization that starts from an initial guess; on some visits it fails to converge, or 
 converges to a poor solution, for instance when the correlation function is noisy because of a low number of sources.
@@ -350,10 +365,28 @@ its long axis: the map is first cleaned with an isotropic window, its anisotropy
 second moments \citep{2003MNRAS.343..459H, 2005MNRAS.361.1287M} and expressed with the shear 
 parametrization $(g_1, g_2)$ of \citetalias{2021A&A...650A..81L}, and the raw map is cleaned again with the corresponding elliptical window.
 The cleaned map, linearly interpolated between its pixels, is the kernel.
+\NEW{The three steps are shown on a real visit in Fig.~\ref{fig:turbogp_kernel} (bottom row): the windowed map, its Fourier power in which 51 modes
+out of 5\,940 pass the threshold, and the cleaned map, which keeps the elongated correlation pattern of the measurement and none of its noise.}
 There are no hyperparameters and nothing to fit.
 Unlike \citetalias{2025AJ....170..361G}, we do not subtract a third-order polynomial before the GP, since the per-visit part of the 
 astrometric model of Sect.~\ref{dataAndAstrometry} already absorbs the large-scale distortions, we do not include the cross-correlation between 
 the two components, and, as explained below, we do not divide the field of view into patches.
+
+\begin{figure*}
+        \centering
+        \includegraphics[width=\textwidth]{turbogp_kernel}
+        \caption{\small \NEW{The kernel of the two models on a real LSSTCam visit (2025052000348, $z$ band, 163\,661 sources; the example data
+        distributed by \citetalias{2025AJ....170..361G} with their code), $u$ component, from the same 10\,000 random training sources as in production.
+        Top row, \citetalias{2021A&A...650A..81L}: (a) the two-point correlation function measured with \texttt{TreeCorr} on a $21 \times 21$ grid of
+        separations out to $\pm 0.3^\circ$; (b) the anisotropic von K\'arm\'an kernel fitted to it (Eq.~\ref{eq:chi2}); (c) the difference between the two
+        (note the color scale), a coherent pattern with an rms of ${\sim}27\,\mathrm{mas}^2$: the part of the correlations that the parametric kernel does
+        not describe. Bottom row, TURBO-GP: (d) the same measurement with $20''$ pixels ($108 \times 108$), multiplied by the elliptical Hann window matched
+        to its anisotropy; (e) the low-frequency part of its Fourier power (half plane $k_u \ge 0$, logarithmic scale), in which the 51 modes above 2.5 times
+        the noise level are outlined; (f) the map transformed back from these modes alone, which is the kernel: the pattern of (d) without its noise.
+        All maps are in mas$^2$. The code and the data of this figure and of Figs.~\ref{fig:turbogp_matvec} and \ref{fig:turbogp_cg} are in the
+        \texttt{python/} directory of the technote repository.}}
+        \label{fig:turbogp_kernel}
+\end{figure*}
 
 The difficulty with this kernel is the one anticipated in Sect.~\ref{sec:gpbasics}.
 The cleaned map has a non-negative spectrum, so it is a valid kernel as a periodic function, with a period equal to the size of the measured 
@@ -371,10 +404,20 @@ The observation is that the cleaned map is exactly a finite sum of Fourier modes
 known exactly from its values on a grid.
 We therefore represent the covariance between sources through a fine regular grid of the tangent plane with a spacing $h$ equal to half the pixel of 
 the correlation function ($10''$ here), covering the field of view enlarged by the extent of the kernel.
-Each source is spread on the four grid nodes that surround it with bilinear weights, which defines a sparse $N \times N_g$ matrix $\mathbf{W}$ with 
+Each source is spread on the four grid nodes that surround it with bilinear weights, which defines a sparse $N \times N_g$ matrix $\mathbf{W}$ with
 four non-negative entries per row summing to one, where $N_g$ is the number of grid nodes.
-The covariance between two grid nodes depends only on their separation, so the covariance between all nodes is a convolution by the kernel image, 
-which we write as a matrix $\mathbf{G}$ and compute with fast Fourier transforms on a grid zero-padded to more than the size of the field plus the extent 
+\NEW{The kernel is also tabulated on this grid: the cleaned map, defined with the pixel of the correlation function, is resampled with the spacing $h$
+by trigonometric interpolation, which is exact since the map is band-limited; we call the result the kernel image, $\kappa_m = \xi(\mathbf{g}_m)$,
+where $\mathbf{g}_m$ is the separation of node $m$ from the origin.
+The covariance between two grid nodes depends only on their separation, so the covariance matrix of the nodes, applied to any image $\mathbf{f}$
+defined on the nodes, is the convolution of that image by the kernel image,}
+\begin{equation}
+\label{eq:G}
+(\mathbf{G}\, \mathbf{f})_m = \sum_{n} \xi(\mathbf{g}_m - \mathbf{g}_n)\, f_n = (\boldsymbol{\kappa} \ast \mathbf{f})_m ;
+\end{equation}
+\NEW{the image to which it is applied below is $\mathbf{W}^T \mathbf{v}$, the values of a vector $\mathbf{v}$ defined on the sources deposited on
+the nodes that surround them, and zero elsewhere.
+This convolution is computed} with fast Fourier transforms on a grid zero-padded to more than the size of the field plus the extent
 of the kernel, so that the periodic wrap of the discrete Fourier transform never connects two sources.
 The covariance between sources is then
 \begin{equation}
@@ -384,7 +427,8 @@ The covariance between sources is then
 where $\mathbf{F}$ is the two-dimensional discrete Fourier transform on the padded grid and $\hat{P}_k$ the Fourier coefficients of the kernel image, which are 
 real because the image is symmetric.
 Zero-padding the kernel image is a truncation again, and a few of the $\hat{P}_k$ are slightly negative; we clip them to zero, once, at the cost of one Fourier transform.
-Then, for any vector $\mathbf{v}$,
+\NEW{A covariance matrix is valid when no linear combination of the field values has a negative variance: for any set of weights $v_i$ attached to the sources,
+the variance of $\sum_i v_i\, y(\mathbf{X}_i)$ is $\mathbf{v}^T \mathbf{K}\, \mathbf{v}$, and with Eq.~\ref{eq:wgw} this quantity is a sum of non-negative terms,}
 \begin{equation}
 \label{eq:psd}
 \mathbf{v}^T \mathbf{K}\, \mathbf{v} = \frac{1}{N_g} \sum_k \hat{P}_k \left| (\mathbf{F}\, \mathbf{W}^T \mathbf{v})_k \right|^2 \ge 0 ,
@@ -396,22 +440,91 @@ Equation~\ref{eq:psd} is nothing else than Bochner's theorem applied to the padd
 by the bilinear interpolation at the scale $h$, a second-order effect, with the non-negative spectrum $\hat{P}_k$.
 The per-visit $O(N^3)$ decomposition of \citetalias{2025AJ....170..361G} is not accelerated but eliminated.
 
-The linear system $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ of Eq.~\ref{eq:gpmean} is solved without ever storing $\mathbf{C}$, with the conjugate 
+The linear system $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ of Eq.~\NEW{\ref{eq:alpha}} is solved without ever storing $\mathbf{C}$, with the conjugate
 gradient method \citep{hestenes1952} and a diagonal (Jacobi) preconditioner.
-Each iteration applies $\mathbf{C}$ to a vector, which by Eq.~\ref{eq:wgw} is one spreading on the grid, one pair of fast Fourier transforms, one 
+\NEW{Equation~\ref{eq:alpha} is the question: find the weights $\boldsymbol{\alpha}$ such that $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$.
+The direct answer, building the $N \times N$ matrix $\mathbf{C}$ and factorizing it, is what the dense approach does.
+The conjugate gradient never needs the matrix itself; it only needs the answer to one question, asked repeatedly: given some vector $\mathbf{v}$
+with one number per training source, what is $\mathbf{C}\, \mathbf{v}$?
+By Eq.~\ref{eq:wgw}, this product is}
+\begin{equation}
+\label{eq:matvec}
+\mathbf{C}\, \mathbf{v} = \mathbf{W}\, \mathbf{F}^{-1}\, \mathrm{diag}(\hat{P}_k)\, \mathbf{F}\, \mathbf{W}^T \mathbf{v} + \mathbf{D}\, \mathbf{v} ,
+\end{equation}
+\NEW{to be read from right to left as four steps, shown on a real visit in Fig.~\ref{fig:turbogp_matvec} for $\mathbf{v} = \mathbf{y}$.
+First, the grid is filled: the value $v_i$ of each source is deposited on the four nodes that surround it, multiplied by its bilinear weights,
+which gives the image $\mathbf{W}^T \mathbf{v}$ of the grid, zero away from the sources (Fig.~\ref{fig:turbogp_matvec}a).
+Second, this image is convolved by the kernel image through the padded grid, i.e., zero-padded, Fourier transformed, multiplied mode by mode
+by $\hat{P}_k$, which is what $\mathrm{diag}(\hat{P}_k)$ does, and transformed back: the result is the field that the values $\mathbf{v}$ placed at the
+training positions would produce at every node of the grid, as in the right-hand side of Eq.~\ref{eq:gpmean} (Fig.~\ref{fig:turbogp_matvec}b,c).
+Third, this field is read back at the position of each source by bilinear interpolation between the four nodes that surround it, i.e.,
+multiplied by $\mathbf{W}$, which gives the value of $\mathbf{K}\, \mathbf{v}$ at the sources.
+Fourth, the noise term $\sigma_i^2 v_i$ is added (Fig.~\ref{fig:turbogp_matvec}d).
+The vector $\mathbf{v}$ is anything with one number per training source: the data $\mathbf{y}$ in Fig.~\ref{fig:turbogp_matvec}, the successive
+search directions of the solve described below, or the weights $\boldsymbol{\alpha}$ at prediction time (Eq.~\ref{eq:meanfield}).}
+Each iteration \NEW{therefore costs} one spreading on the grid, one pair of fast Fourier transforms, one
 interpolation back to the sources, and one multiplication by $\mathbf{D}$: $O(N + N_g \log N_g)$ operations and $O(N + N_g)$ memory, instead of $O(N^3)$ and $O(N^2)$.
-The iterations stop at a fixed relative tolerance, so that the solution is deterministic; their number grows with the ratio of the variance of the 
-field to the measurement noise, and is of the order of a hundred on the DP2 data.
+\NEW{The solve is a guess-and-correct loop built on this product.
+It starts from the guess $\boldsymbol{\alpha}_0 = 0$, whose mismatch, the residual $\mathbf{r}_0 = \mathbf{y} - \mathbf{C}\, \boldsymbol{\alpha}_0$,
+is the data vector itself, and picks a direction $\mathbf{p}_0 = \mathbf{M}^{-1} \mathbf{r}_0$ along which to improve the guess, where
+$\mathbf{M} = \mathrm{diag}(\xi(0) + \sigma_i^2)$ is the diagonal of $\mathbf{C}$: $\mathbf{p}_0$ is $\mathbf{y}$ with each star's value divided by its own total variance,
+which is the solution one would obtain if the sources were uncorrelated.
+Each iteration then asks Eq.~\ref{eq:matvec} once, for $\mathbf{C}\, \mathbf{p}$, which gives the length of the step along $\mathbf{p}$ that minimizes
+the error, $a = (\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}) / (\mathbf{p}^T \mathbf{C}\, \mathbf{p})$, and the updates
+$\boldsymbol{\alpha} \leftarrow \boldsymbol{\alpha} + a\, \mathbf{p}$ and $\mathbf{r} \leftarrow \mathbf{r} - a\, \mathbf{C}\, \mathbf{p}$; the next direction
+is the new preconditioned residual made conjugate to the previous direction, $\mathbf{p} \leftarrow \mathbf{M}^{-1} \mathbf{r} + b\, \mathbf{p}$ with $b$ the
+ratio of the new to the old value of $\mathbf{r}^T \mathbf{M}^{-1} \mathbf{r}$, so that successive directions are $\mathbf{C}$-orthogonal and the error
+decreases monotonically \citep[see][for a derivation]{shewchuk1994}.
+The loop stops when the norm of the residual falls below $10^{-7}$ times the norm of $\mathbf{y}$, a fixed relative tolerance, so that the solution is
+deterministic: at that point $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ to that precision, and Eq.~\ref{eq:alpha} is solved.
+Figure~\ref{fig:turbogp_cg} shows the loop on a real visit, where each point of the residual curve is one call to Eq.~\ref{eq:matvec}: the residual
+decreases by seven orders of magnitude in 139 iterations with the preconditioner and 182 without, and the field predicted from the current weights
+is visually final after ten iterations, the remaining ones adjusting details below the measurement noise.
+Conversely, Eq.~\ref{eq:matvec} applied to the final $\boldsymbol{\alpha}$ returns the data $\mathbf{y}$ (Fig.~\ref{fig:turbogp_matvec}e,f), which is
+what solving Eq.~\ref{eq:alpha} means.}
+The number of iterations grows with the ratio of the variance of the field to the measurement noise, and is of the order of a hundred on the DP2
+data\NEW{, far from the cap of 500 iterations}.
+
+\begin{figure*}
+        \centering
+        \includegraphics[width=\textwidth]{turbogp_matvec}
+        \caption{\small \NEW{The four steps of the product $\mathbf{C}\, \mathbf{y}$ (Eq.~\ref{eq:matvec}) on the visit of Fig.~\ref{fig:turbogp_kernel},
+        $u$ component, with the 10\,000 training sources on the $1439 \times 1454$ grid of $10''$ nodes that covers the field of view.
+        (a) Step 1: the centered residual $y_i$ of each source (circles) is deposited on the four nodes around it with bilinear weights; a $0.2^\circ$
+        zoom of the image $\mathbf{W}^T \mathbf{y}$, zero (white) away from the sources. (b) The kernel image $\boldsymbol{\kappa}$: the cleaned map of
+        Fig.~\ref{fig:turbogp_kernel}f resampled on the nodes ($217 \times 217$). (c) Step 2: the convolution $\boldsymbol{\kappa} \ast \mathbf{W}^T \mathbf{y}$
+        over the whole grid, computed with one pair of fast Fourier transforms on the padded $1728 \times 1728$ grid (shown averaged over $8 \times 8$ nodes;
+        the black square is the zoom of panel a): the field that the values $\mathbf{y}$ placed at the sources would produce everywhere.
+        (d) Steps 3 and 4: the field read back at the sources by bilinear interpolation, $\mathbf{K}\, \mathbf{y}$, plus the noise term $\sigma_i^2 y_i$,
+        which gives $\mathbf{C}\, \mathbf{y}$. The whole product takes ${\sim}30$~ms. Since $\mathbf{y}$ is in mas and $\mathbf{C}$ in mas$^2$, panels c
+        and d are in mas$^3$. (e) The same four steps applied to the weights $\boldsymbol{\alpha}$ returned by the solve of Eq.~\ref{eq:alpha},
+        $\mathbf{C}\, \boldsymbol{\alpha}$, and (f) the data $\mathbf{y}$: they agree to the $10^{-7}$ tolerance of the solve, which is what solving
+        Eq.~\ref{eq:alpha} means.}}
+        \label{fig:turbogp_matvec}
+\end{figure*}
+
+\begin{figure*}
+        \centering
+        \includegraphics[width=\textwidth]{turbogp_cg}
+        \caption{\small \NEW{The conjugate-gradient solve of $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ (Eq.~\ref{eq:alpha}) for the $u$ component
+        of the visit of Fig.~\ref{fig:turbogp_kernel}. (a) Norm of the residual $\mathbf{r}_k = \mathbf{y} - \mathbf{C}\, \boldsymbol{\alpha}_k$ relative to
+        that of the data, as a function of the iteration $k$, with the Jacobi preconditioner (139 iterations to reach the $10^{-7}$ tolerance, dashed line)
+        and without it (182); each iteration is one product of Fig.~\ref{fig:turbogp_matvec}, about 30~ms. (b--f) The field $\hat{y}$
+        (Eq.~\ref{eq:meanfield}) predicted from the current weights $\boldsymbol{\alpha}_k$ after 1, 3, 10, and 30 iterations and at convergence (dots in
+        panel a): the first iterate is proportional to the data divided by their total variance and overshoots; after ten iterations the field is visually
+        final, and the last panel is the mean field that the per-detector predictions read off. In mas, averaged over $8 \times 8$ nodes.}}
+        \label{fig:turbogp_cg}
+\end{figure*}
 
 The prediction is also reorganized.
-Once $\boldsymbol{\alpha} = \mathbf{C}^{-1}\mathbf{y}$ is known, the GP prediction of Eq.~\ref{eq:gpmean} at any position $\mathbf{X}$ is a field,
+\NEW{Once $\boldsymbol{\alpha}$ is known, Eq.~\ref{eq:gpmean} applied at every position $\mathbf{X}$ of the focal plane defines a field,}
 \begin{equation}
 \label{eq:meanfield}
 \hat{y}(\mathbf{X}) = \sum_{j=1}^{N} \alpha_j\, \xi(\mathbf{X} - \mathbf{X}_j),
 \end{equation}
 that is, the convolution of the kernel with the weights $\alpha_j$ placed at the training positions.
-With the grid representation, this field is computed once per component, as a single convolution of the spread 
-weights $\mathbf{W}^T \boldsymbol{\alpha}$ by the kernel image, and stored as an image of the focal plane.
+With the grid representation, this field is computed once per component, as a single convolution of the spread
+weights $\mathbf{W}^T \boldsymbol{\alpha}$ by the kernel image \NEW{(the first two steps of Eq.~\ref{eq:matvec})}, and stored as an image of the focal plane\NEW{, the last panel of Fig.~\ref{fig:turbogp_cg}}.
 Each of the per-detector predictions of Sect.~\ref{sec:l21} is then a bilinear read-off of this image, with a cost independent 
 of the number of training sources, in place of the $M \times N$ cross-covariance matrix of the dense approach, which dominated 
 the run time of \citetalias{2025AJ....170..361G}.
