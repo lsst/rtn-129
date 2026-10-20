@@ -49,13 +49,13 @@ it with a simple least-squares minimization.
 This reduces the cost of the hyperparameter optimization from $O(N^3)$ to $O(N \log N)$, while keeping a Cholesky factorization for the inference.
 This method removes about 90\% of the variance that turbulence introduces in the astrometric dispersion.
 Following the path paved by \citetalias{2021AJ....162..106F} and \citetalias{2021A&A...650A..81L}, \citet[hereafter G25]{2025AJ....170..361G} pushed the approach further on DES data 
-by skipping the hyperparameter fit altogether, as well as the constraint of an analytical function to describe the spatial correlation, and using an interpolated version of the measured two-point correlation function directly as the kernel.
+by skipping the hyperparameter fit altogether, as well as the constraint of an analytical function to describe the spatial correlation, and using an interpolated version of the measured 
+two-point correlation function directly as the kernel.
 As there is no direct comparison with the other methods, it appears to perform similarly to the previous ones.
 The price is a singular value decomposition (SVD) to remove the negative eigenvalues, since the resulting covariance matrix is not positive definite.
 Even with this SVD, we found \citetalias{2025AJ....170..361G} to be faster than \citetalias{2021A&A...650A..81L}, because there is no hyperparameter fit anymore and no evaluation of 
 the von K\'arm\'an kernel, whose calls to Bessel functions are slow.
-The authors claimed that the SVD is not necessary and that a Cholesky decomposition can be used instead; we were not 
-able to reproduce their result on Rubin data without an SVD.
+\NEW{However, the authors claimed that the SVD is not necessary and that a Cholesky decomposition can be used instead.}
 More recently, \citet[hereafter Y26]{2026AJ....171..238Y} also observed a pure $E$-mode pattern in astrometric residuals, 
 but did not follow the path of \citetalias{2021AJ....162..106F}, \citetalias{2021A&A...650A..81L}, or \citetalias{2025AJ....170..361G} and left the correction for further analyses.
 
@@ -571,9 +571,13 @@ the numbers quoted below are per job, i.e., per (visit, HEALPix region) pair.
 
 The first improvement is on the error rate, defined as the number of jobs that did not complete over the total number of jobs.
 On DP2, \citetalias{2021A&A...650A..81L} shows an error rate of 5\%, while TURBO-GP shows an error rate of 1\%.
-This is explained mostly by failures of the hyperparameter minimization in \citetalias{2021A&A...650A..81L} (Sect.~\ref{sec:l21}), 
-which lead to a kernel for which the Cholesky decomposition fails.
-Since this step is entirely removed in TURBO-GP, these failures no longer occur.
+\NEW{About 75\% of the \citetalias{2021A&A...650A..81L} failures are jobs killed by the batch system because of excessive memory usage or wall time. 
+As shown below, all of these failures disappear with TURBO-GP, thanks to its lower memory usage and shorter computing time. 
+Another 7\% of the \citetalias{2021A&A...650A..81L} failures are due to the hyperparameter minimization (Sect.~\ref{sec:l21}), 
+which leads to a kernel for which the Cholesky decomposition fails. 
+Since this step is entirely removed in TURBO-GP, these failures no longer occur. 
+The remaining failures are common to \citetalias{2021A&A...650A..81L} and TURBO-GP and are due to empty input source tables for the visits.}
+
 
 We can then compare the computing time of the two methods; the distributions of the wall time per job are shown in Figure~\ref{time_computation}.
 There is an improvement of almost two orders of magnitude from \citetalias{2021A&A...650A..81L} to TURBO-GP, which brings the total 
