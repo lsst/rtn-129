@@ -110,7 +110,7 @@ a two-dimensional spline \citep{RTN-115}.
 In this paper, we take the residuals produced by the \texttt{gbdes} fit of DP2 and re-run this Gaussian process step, with the 
 \citetalias{2021A&A...650A..81L} model used in production and with TURBO-GP, so that both models are compared on exactly the same inputs.
 
-This analysis is done on a subset of 28\,517 visits, which are the visits with a successful atmospheric turbulence fit with 
+This analysis is done on a subset of 28\,518 visits, which are the visits with a successful atmospheric turbulence fit with 
 the \citetalias{2021A&A...650A..81L} method described in Sect.~\ref{sec:l21}.
 Some visits overlap several HEALPix regions and therefore have several astrometric solutions.
 In the current processing, a visit that overlaps multiple HEALPix regions goes through as many \citetalias{2021A&A...650A..81L} fits as there 
@@ -120,7 +120,7 @@ $E$-mode variance before any atmospheric modeling, in order to avoid duplicates.
 
 An example of what the astrometric residuals look like is shown for three visits in Figure~\ref{2025051500_visits}.
 For all three visits, the astrometric residual field shows the expected stripe patterns, with spatial correlations 
-that are curl-free ($E$-mode dominated). The $E$- and $B$-mode correlation functions averaged over the 28\,517 visits 
+that are curl-free ($E$-mode dominated). The $E$- and $B$-mode correlation functions averaged over the 28\,518 visits 
 are shown in Figure~\ref{EBmode}: the field is $E$-mode dominated, with an $E$-mode variance of ${\sim}340\,\mathrm{mas}^2$.
 This is 10 times higher than what was observed with HSC, and 3 times higher than what is observed with DES.
 In \citetalias{2021A&A...650A..81L}, a forecast of the expected $E$-mode variance as a function of exposure time was made, 
@@ -151,7 +151,7 @@ for DP2 and discuss some of its limitations, and then present the new TURBO-GP d
 \begin{figure*}
         \centering
         \includegraphics[scale=0.6]{EBmode}
-        \caption{\small $E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals, averaged over the 28\,517 DP2 
+        \caption{\small $E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals, averaged over the 28\,518 DP2 
         visits used in this analysis, as a function of angular separation. The residual field is dominated by the $E$-mode, with a variance 
         of ${\sim}340\,\mathrm{mas}^2$ at small separations, while the $B$-mode stays at the level of ${\sim}30\,\mathrm{mas}^2$.}
         \label{EBmode}
@@ -332,7 +332,7 @@ and the difference between the two is a coherent pattern with an rms of ${\sim}2
 Whatever the kernel does not describe is left in the corrected residuals.
 Second, the hyperparameter fit is a non-linear minimization that starts from an initial guess; on some visits it fails to converge, or 
 converges to a poor solution, for instance when the correlation function is noisy because of a low number of sources.
-The 28\,517 visits of Sect.~\ref{dataAndAstrometry} are those for which this fit succeeded, and the failure rate is discussed in Sect.~\ref{sec:errorRate}.
+The 28\,518 visits of Sect.~\ref{dataAndAstrometry} are those for which this fit succeeded, and the failure rate is discussed in Sect.~\ref{sec:errorRate}.
 Third, the run time is dominated by the evaluation of the kernel itself: Eq.~\ref{eq:vk} requires a Bessel function for 
 each pair of positions, i.e., $10^8$ evaluations for the training matrix, and as many again as there are grid points times 
 training sources for each detector at prediction time.
@@ -538,6 +538,9 @@ the number of training sources is no longer limited by the linear algebra.
 For the comparison presented in this paper, however, TURBO-GP is run exactly like the \citetalias{2021A&A...650A..81L} model of DP2: 
 the same 10\,000 randomly selected training sources, with the same random seed, the same per-source uncertainties in $\mathbf{D}$.
 Only the kernel and the way the linear algebra is solved differ, so that the differences observed in Sect.~\ref{Results} can be attributed to the model itself.
+\NEW{However, the gain in computing time and memory allows this cap of 10\,000 training sources to be lifted, and we therefore ran a second version of
+TURBO-GP with 50\,000 randomly selected training sources. The choice of this number, and what is gained with respect to 10\,000 training sources,
+are discussed in Sect.~\ref{sec:TrainingValidation}.}
 
 None of the numerical ingredients of TURBO-GP is new in itself, and it is worth being precise about where they come from.
 Using the measured two-point correlation function directly as the kernel, and the role of Bochner's theorem in making such a kernel admissible, 
@@ -556,6 +559,37 @@ quantified in Sect.~\ref{Results}.
 
 \section{Results}
 \label{Results}
+
+\subsection{Optimal number of training points}
+\label{sec:TrainingValidation}
+
+\NEW{As explained in Sect.~\ref{sec:l21}, the number of training sources was capped at 10\,000 for DP2.
+With the gain in computing time and memory brought by TURBO-GP, it is legitimate to ask whether this number can be increased, so that the
+small-scale correlations are better sampled and therefore better modeled.
+We made a quantitative study on a single visit (2026010400620) that has a large number of isolated sources (more than 200\,000): we increased
+the number of training sources from 10\,000 to 100\,000 in steps of 10\,000, and for each training sample we measured the fraction of the $E$-mode
+variance that remains after correction, both on the training sample itself and on the validation sample made of the remaining sources.
+This is presented in the left panel of Figure~\ref{training_validation_split_discussion}, and the right panel shows the distribution of the number of
+isolated sources available for the fit across all the visits of DP2.
+At 10\,000 training sources, there is a clear sign of overfitting: the remaining variance is ${\sim}5\%$ on the training sample but ${\sim}20\%$ on the validation sample.
+As the number of training sources increases, the gap between the two closes and the validation curve flattens, reaching ${\sim}12\%$ around 50\,000 training sources,
+beyond which the improvement is slow.
+Looking at the number of isolated sources per visit, we found it reasonable to set the cap at 50\,000 training sources, since at least 50\% of the visits
+have 50\,000 isolated sources available for training; as before, visits with fewer sources use them all.
+This is why, in addition to running TURBO-GP with 10\,000 training sources for an apples-to-apples comparison with the DP2 production,
+we ran a version with 50\,000 training sources to exploit the full potential of the method.}
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.42]{2026010400620_SNR25}
+        \includegraphics[scale=0.42]{training_validation_split}
+        \caption{\small \NEW{Left: fraction of the $E$-mode variance of the astrometric residuals of visit 2026010400620 that remains after correction
+        with TURBO-GP, in percent, as a function of the number of training sources, measured on the training sample (dashed) and on the validation
+        sample made of the remaining sources (solid; the top axis gives its size). The vertical lines mark 10\,000 (dashed) and 50\,000 (dash-dotted)
+        training sources. Right: distribution of the number of isolated sources available for the fit per visit over DP2, with the same two
+        vertical lines; visits with fewer sources than the cap use them all.}}
+        \label{training_validation_split_discussion}
+\end{figure*}
 
 \subsection{Time and memory performance on DP2}
 \label{sec:errorRate}
@@ -577,11 +611,13 @@ Another 7\% of the \citetalias{2021A&A...650A..81L} failures are due to the hype
 which leads to a kernel for which the Cholesky decomposition fails. 
 Since this step is entirely removed in TURBO-GP, these failures no longer occur. 
 The remaining failures are common to \citetalias{2021A&A...650A..81L} and TURBO-GP and are due to empty input source tables for the visits.}
+\NEW{This improvement in error rate is the same whether TURBO-GP is run with 10\,000 or 50\,000 training sources.}
 
 
 We can then compare the computing time of the two methods; the distributions of the wall time per job are shown in Figure~\ref{time_computation}.
-There is an improvement of almost two orders of magnitude from \citetalias{2021A&A...650A..81L} to TURBO-GP, which brings the total 
-wall time for DP2 from ${\sim}2.7$ years down to ${\sim}2$ weeks.
+There is an improvement of almost two orders of magnitude from \citetalias{2021A&A...650A..81L} to TURBO-GP, which brings the total
+wall time for DP2 from ${\sim}2.7$ years down to ${\sim}2$ weeks \NEW{for TURBO-GP with 10\,000 training sources, and to ${\sim}1$ month
+for TURBO-GP with 50\,000 training sources}.
 The difference is explained by several factors.
 At training, there is no fit anymore: instead of computing the two-point correlation function several hundred times, as required by 
 the bootstrap estimate of its covariance matrix, and then fitting the hyperparameters, the two-point correlation function is computed only once.
@@ -601,6 +637,7 @@ At the time of writing, \texttt{gaussianProcessesTurbulenceFit} loads in memory 
 given HEALPix region, and then selects the sources of the visit being processed; HEALPix regions with more visits therefore require 
 more memory just to select one visit.
 When the task was developed for DP2, this choice minimized data manipulation, but it will not scale to future data releases, and it will be changed.
+\NEW{There is no significant difference in memory usage between TURBO-GP run with 10\,000 training sources and with 50\,000 training sources.}
 
 Improving the memory usage and the computing time normally comes at the cost of a less accurate method.
 However, we show in the following subsections that, because TURBO-GP uses the empirical two-point correlation function at its root, 
@@ -610,8 +647,10 @@ it also improves how well atmospheric turbulence is described for astrometry.
         \centering
         \includegraphics[scale=0.6]{time}
         \caption{\small Distribution of the wall time per job of the \texttt{gaussianProcessesTurbulenceFit} task on DP2, with one job per 
-        (visit, HEALPix region) pair, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP (blue). 
-        The legend gives the wall time summed over all jobs: 979 days for \citetalias{2021A&A...650A..81L} and 15 days for TURBO-GP.}
+        (visit, HEALPix region) pair, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP \NEW{with 10\,000
+        (blue, solid) and 50\,000 (blue, dashed) training sources}.
+        The legend gives the wall time summed over all jobs: 979 days for \citetalias{2021A&A...650A..81L}\NEW{, 15 days for TURBO-GP with 10\,000
+        training sources and 34 days for TURBO-GP with 50\,000 training sources}.}
         \label{time_computation}
 \end{figure*}
 
@@ -619,20 +658,23 @@ it also improves how well atmospheric turbulence is described for astrometry.
         \centering
         \includegraphics[scale=0.6]{memory}
         \caption{\small Distribution of the maximum resident memory (max RSS) per job of the \texttt{gaussianProcessesTurbulenceFit} task on DP2, 
-        for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP (blue). The bulk of 
-        the \citetalias{2021A&A...650A..81L} jobs peaks at ${\sim}7$\,GB, while the TURBO-GP jobs peak at ${\sim}1$--$2$\,GB. The common tail up 
+        for the \citetalias{2021A&A...650A..81L} model used in the DP2 production (red) and for TURBO-GP \NEW{with 10\,000 (blue, dashed) and
+        50\,000 (blue, dash-dotted) training sources}. The bulk of
+        the \citetalias{2021A&A...650A..81L} jobs peaks at ${\sim}7$\,GB, while the TURBO-GP jobs peak at ${\sim}1$--$2$\,GB\NEW{, for both
+        training-sample sizes}. The common tail up
         to ${\sim}28$\,GB is due to the loading of the source table of the whole HEALPix region by the task (see text).}
         \label{memory_computation}
 \end{figure*}
+
 
 \subsection{On single visits of Rubin Observatory}
 \label{sec:singleVisit}
 
 We show the results on a single visit (visit 2026010400620) in Figure~\ref{2026010400620_L21} for the \citetalias{2021A&A...650A..81L} model used in 
-the DP2 production and in Figure~\ref{2026010400620_L26} for TURBO-GP.
+the DP2 production and in Figure~\ref{2026010400620_L26} for TURBO-GP \NEW{with 50\,000 training sources}.
 While both \citetalias{2021A&A...650A..81L} and TURBO-GP describe the overall features of the residual field well, TURBO-GP visually describes the small-scale features better.
-This can be seen in the correlation functions of the corrected residuals: the overall astrometric residuals after GP modeling are smaller for 
-TURBO-GP than for \citetalias{2021A&A...650A..81L}, by about 10\% in the variance of the $E$-mode.
+This can be seen in the correlation functions of the corrected residuals: the overall astrometric residuals after GP modeling are smaller for
+TURBO-GP than for \citetalias{2021A&A...650A..81L}, by about \NEW{60\%} in the variance of the $E$-mode.
 This is an example on a single visit, but we show in the next subsection that it generalizes to the full DP2 sample.
 
 \begin{figure*}
@@ -643,10 +685,10 @@ This is an example on a single visit, but we show in the next subsection that it
         \caption{\small Atmospheric turbulence modeling of visit 2026010400620 with the \citetalias{2021A&A...650A..81L} model used in the DP2 production. 
         Top row: $x$ (left) and $y$ (center) components of the astrometric residuals (in mas) as a function of position in the focal plane (in mm), and their 
         $E$-mode (blue) and $B$-mode (red) correlation functions as a function of angular separation (right); this visit is strongly affected by turbulence, 
-        with an $E$-mode variance of ${\sim}1700\,\mathrm{mas}^2$, about five times the DP2 average (Fig.~\ref{EBmode}). Middle row: GP prediction at the 
-        positions of the sources, with the same color scale, and the correlation functions of the prediction. Bottom row: residuals after subtraction of 
-        the GP prediction, with a color scale reduced by a factor of ${\sim}3$, and their correlation functions; note the change of vertical scale, the $E$-mode 
-        variance at the smallest separations going from ${\sim}1700$ to ${\sim}110\,\mathrm{mas}^2$. \NEW{TODO}}
+        with an $E$-mode variance of \NEW{${\sim}1050\,\mathrm{mas}^2$, about three times} the DP2 average (Fig.~\ref{EBmode}). Middle row: GP prediction at the
+        positions of the sources, with the same color scale, and the correlation functions of the prediction. Bottom row: residuals after subtraction of
+        the GP prediction, with a color scale reduced by a factor of ${\sim}3$, and their correlation functions; note the change of vertical scale, the $E$-mode
+        variance at the smallest separations going from \NEW{${\sim}1050$ to ${\sim}225\,\mathrm{mas}^2$}.}
         \label{2026010400620_L21}
 \end{figure*}
 
@@ -656,47 +698,56 @@ This is an example on a single visit, but we show in the next subsection that it
         \includegraphics[scale=0.38]{2026010400620}
         \includegraphics[scale=0.38]{2026010400620_L26_predict}
         \includegraphics[scale=0.38]{2026010400620_L26_residuals}
-        \caption{\small Same as Fig.~\ref{2026010400620_L21} for TURBO-GP, on the same visit and with the same training sample. The prediction (middle row) 
-        follows the small-scale features of the residual field more closely, and the $E$-mode variance of the corrected residuals at the smallest separations 
-        (bottom right) is ${\sim}95\,\mathrm{mas}^2$, about 10\% lower than with \citetalias{2021A&A...650A..81L}. \NEW{TODO}}
+        \caption{\small Same as Fig.~\ref{2026010400620_L21} for TURBO-GP on the same visit, \NEW{with 50\,000 training sources instead of 10\,000}. The prediction (middle row)
+        follows the small-scale features of the residual field more closely, and the $E$-mode variance of the corrected residuals at the smallest separations
+        (bottom right) is \NEW{${\sim}88\,\mathrm{mas}^2$, about 60\% lower} than with \citetalias{2021A&A...650A..81L}.}
         \label{2026010400620_L26}
 \end{figure*}
 
 \subsection{Global results on DP2}
 \label{sec:globalResults}
 
-For the 28\,517 visits in common between the DP2 \citetalias{2021A&A...650A..81L} run and TURBO-GP, we compute the $E$- and $B$-mode correlation 
-functions of the astrometric residuals corrected with the respective GP model, and we average these correlation functions over the 28\,517 visits.
-The results are presented in Figure~\ref{EBmode_residuals}.
-Both \citetalias{2021A&A...650A..81L} and TURBO-GP remove ${\sim}90\%$ of the variance introduced by the atmosphere (Fig.~\ref{EBmode}), but the 
+For the 28\,518 visits in common between the DP2 \citetalias{2021A&A...650A..81L} run and TURBO-GP \NEW{(with 10\,000 and 50\,000 training sources)}, we compute the $E$- and $B$-mode correlation 
+functions of the astrometric residuals corrected with the respective GP model, and we average these correlation functions over the 28\,518 visits.
+The results are presented in \NEW{the left panel of} Figure~\ref{EBmode_residuals}.
+Both \citetalias{2021A&A...650A..81L} and TURBO-GP \NEW{with 10\,000 training sources} remove ${\sim}90\%$ of the variance introduced by the atmosphere (Fig.~\ref{EBmode}), but the 
 residual variance of TURBO-GP is 30\% lower in $E$-mode and 40\% lower in $B$-mode than that of \citetalias{2021A&A...650A..81L}.
 So even if \citetalias{2021A&A...650A..81L} was already doing a good job at keeping atmospheric turbulence under control, TURBO-GP improves the 
 description of the atmosphere, at a lower cost in time and memory, and with a description of the spatial correlation that is measured directly 
 from the data rather than imposed by a parametric kernel.
+\NEW{As discussed in Sect.~\ref{sec:TrainingValidation}, there is room to improve TURBO-GP further by increasing the number of training sources to 50\,000, 
+which reduces the remaining spatial correlation by a further factor of ${\sim}4$ compared with \citetalias{2021A&A...650A..81L} 
+(${\sim}9$ vs ${\sim}39\,\mathrm{mas}^2$ in $E$-mode at the smallest separations, and ${\sim}1$ vs ${\sim}11\,\mathrm{mas}^2$ in $B$-mode).}
+
+\NEW{A natural question is whether this reflects overfitting, since the correlation functions above include the training sources themselves, which the GP follows closely by construction. 
+To check for overfitting, we repeat the measurement using only the validation sources, i.e., the isolated sources that were not used to train the Gaussian process, 
+for the 14\,642 visits with more than 50\,000 isolated sources available for the fit, so that a validation sample exists for the three runs. 
+This is presented in the right panel of Figure~\ref{EBmode_residuals}. 
+The correlations of the residuals are higher on the validation sources than on the full sample, and the gain of TURBO-GP with 10\,000 training sources over 
+\citetalias{2021A&A...650A..81L} shrinks to ${\sim}10\%$ in $E$-mode (${\sim}34$ vs ${\sim}38\,\mathrm{mas}^2$) and becomes marginal in $B$-mode 
+(${\sim}13$ vs ${\sim}14\,\mathrm{mas}^2$), which is the overfitting of the 10\,000-source training sample seen in Sect.~\ref{sec:TrainingValidation}. 
+The qualitative conclusion nevertheless remains the same: TURBO-GP with 10\,000 training sources outperforms the DP2 result, and TURBO-GP with 50\,000 training 
+sources does so by a wide margin, with a residual variance on the validation sources ${\sim}50\%$ lower in $E$-mode (${\sim}18$ vs ${\sim}38\,\mathrm{mas}^2$) 
+and ${\sim}40\%$ lower in $B$-mode (${\sim}8$ vs ${\sim}14\,\mathrm{mas}^2$) than that of \citetalias{2021A&A...650A..81L}.}
 
 There is still some remaining spatial correlation at angular scales well below the size of a CCD itself, and we discuss one potential candidate in Sect.~\ref{static_CCD}.
 But before that, we discuss the correlation of the astrometric residuals with image quality.
-
-\begin{figure*}
-        \centering
-        \includegraphics[scale=0.42]{2026010400620_SNR25}
-        \includegraphics[scale=0.42]{training_validation_split}
-        \caption{\small \NEW{TO DO}}
-        \label{training_validation_split_discussion}
-\end{figure*}
-
 
 
 \begin{figure*}
         \centering
         \includegraphics[scale=0.6]{EBmodeResiduals50kZoom}
         \includegraphics[scale=0.6]{EBmodeResidualsZoom50k_Validation}
-        \caption{\small $E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals after correction of 
-        the atmospheric turbulence, averaged over the 28\,517 DP2 visits, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production 
-        (triangles) and for TURBO-GP (crosses). Compared with the ${\sim}340\,\mathrm{mas}^2$ of $E$-mode variance before correction (Fig.~\ref{EBmode}), 
-        the residual $E$-mode variance at the smallest separations is ${\sim}39\,\mathrm{mas}^2$ for \citetalias{2021A&A...650A..81L} and ${\sim}27\,\mathrm{mas}^2$ 
-        for TURBO-GP; the $B$-mode goes from ${\sim}30\,\mathrm{mas}^2$ to ${\sim}11$ and ${\sim}7\,\mathrm{mas}^2$, respectively. Beyond ${\sim}0.3^\circ$, 
-        both methods leave a floor of a few $\mathrm{mas}^2$ for \citetalias{2021A&A...650A..81L} and ${\sim}1\,\mathrm{mas}^2$ for TURBO-GP.}
+        \caption{\small \NEW{$E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals after correction of
+        the atmospheric turbulence, averaged over the DP2 visits, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production
+        (circles) and for TURBO-GP with 10\,000 (triangles) and 50\,000 (crosses) training sources. Left: all the sources of the 28\,518 visits,
+        training sources included. Right: validation sources only, i.e., the sources not used for training, for the 14\,642 visits with more
+        than 50\,000 isolated sources, so that a validation sample exists for the three runs. On the validation sources, compared with the
+        ${\sim}340\,\mathrm{mas}^2$ of $E$-mode variance before correction (Fig.~\ref{EBmode}), the residual $E$-mode variance at the smallest
+        separations is ${\sim}38\,\mathrm{mas}^2$ for \citetalias{2021A&A...650A..81L} and ${\sim}18\,\mathrm{mas}^2$ for TURBO-GP with 50\,000
+        training sources; the $B$-mode goes from ${\sim}30\,\mathrm{mas}^2$ to ${\sim}14$ and ${\sim}8\,\mathrm{mas}^2$, respectively.
+        Beyond ${\sim}0.3^\circ$, both leave a floor of ${\sim}1$--$3\,\mathrm{mas}^2$. The lower values of the left panel reflect the
+        inclusion of the training sources, which the GP follows closely by construction.}}
         \label{EBmode_residuals}
 \end{figure*}
 
@@ -795,7 +846,7 @@ We leave this for further analysis, but this is the clear remaining path to impr
 \section{Conclusion}
 \label{Conclusion}
 
-We have used the 28\,517 visits of the Rubin Observatory Data Preview 2 with a successful atmospheric turbulence fit to characterize how atmospheric turbulence affects 
+We have used the 28\,518 visits of the Rubin Observatory Data Preview 2 with a successful atmospheric turbulence fit to characterize how atmospheric turbulence affects 
 the astrometry of LSSTCam.
 Once the optical distortions are fit by the astrometric model, the residual displacement field is dominated by the $E$-mode, with a variance of ${\sim}340\,\mathrm{mas}^2$, 
 ten times higher than what was observed with HSC and three times higher than with DES.
@@ -815,12 +866,16 @@ linear system is solved by conjugate gradient, and the prediction is computed on
 As a result, there is no need to divide the field of view into patches, and one Gaussian process per component is fit over the whole LSSTCam focal plane.
 Both methods are implemented in \texttt{treegp} and in the LSST Science Pipelines, and switching from one to the other only requires changing one configuration parameter.
 
-On DP2, TURBO-GP reduces the error rate of the turbulence-fitting task from 5\% to 1\%, the total wall time from ${\sim}2.7$ years to ${\sim}2$ weeks, and 
+On DP2, TURBO-GP reduces the error rate of the turbulence-fitting task from 5\% to 1\%, the total wall time from ${\sim}2.7$ years to ${\sim}2$ weeks
+\NEW{with the same 10\,000 training sources as the DP2 production, or ${\sim}1$ month with 50\,000 training sources}, and
 the typical memory usage per job from ${\sim}7$\,GB to ${\sim}1$--$2$\,GB.
-This improvement in cost does not come with a loss of accuracy: on the same training samples, the astrometric residuals corrected with TURBO-GP have, 
-averaged over DP2, an $E$-mode variance 30\% lower and a $B$-mode variance 40\% lower than those corrected with the \citetalias{2021A&A...650A..81L} model 
-of the DP2 production.
-TURBO-GP is therefore the method we intend to use for future data releases, and the larger training samples it makes affordable remain to be explored.
+This improvement in cost does not come with a loss of accuracy: on the same training samples, the astrometric residuals corrected with TURBO-GP have,
+averaged over DP2, an $E$-mode variance 30\% lower and a $B$-mode variance 40\% lower than those corrected with the \citetalias{2021A&A...650A..81L} model
+of the DP2 production\NEW{ when all sources are used, and ${\sim}10\%$ lower in $E$-mode on the validation sources.
+The lower cost also makes larger training samples affordable: a training-versus-validation study led us to raise the number of training sources
+from 10\,000 to 50\,000, with which the $E$-mode variance of the corrected residuals on the validation sources is ${\sim}50\%$ lower, and the $B$-mode
+variance ${\sim}40\%$ lower, than with the \citetalias{2021A&A...650A..81L} model}.
+TURBO-GP \NEW{with 50\,000 training sources} is therefore the method we intend to use for future data releases.
 
 The astrometric residuals corrected in this way also turn out to be a clean probe of the atmosphere.
 Across DP2, the standard deviation of the $E$-mode of the astrometric residuals correlates with the PSF FWHM, and it explains a large part of the scatter of 
