@@ -628,8 +628,8 @@ it also improves how well atmospheric turbulence is described for astrometry.
 \subsection{On single visits of Rubin Observatory}
 \label{sec:singleVisit}
 
-We show the results on a single visit (visit 2025121400911) in Figure~\ref{2025121400911_L21} for the \citetalias{2021A&A...650A..81L} model used in 
-the DP2 production and in Figure~\ref{2025121400911_L26} for TURBO-GP.
+We show the results on a single visit (visit 2026010400620) in Figure~\ref{2026010400620_L21} for the \citetalias{2021A&A...650A..81L} model used in 
+the DP2 production and in Figure~\ref{2026010400620_L26} for TURBO-GP.
 While both \citetalias{2021A&A...650A..81L} and TURBO-GP describe the overall features of the residual field well, TURBO-GP visually describes the small-scale features better.
 This can be seen in the correlation functions of the corrected residuals: the overall astrometric residuals after GP modeling are smaller for 
 TURBO-GP than for \citetalias{2021A&A...650A..81L}, by about 10\% in the variance of the $E$-mode.
@@ -637,29 +637,29 @@ This is an example on a single visit, but we show in the next subsection that it
 
 \begin{figure*}
         \centering
-        \includegraphics[scale=0.38]{2025121400911}
-        \includegraphics[scale=0.38]{2025121400911_L21_predict}
-        \includegraphics[scale=0.38]{2025121400911_L21_residuals}
-        \caption{\small Atmospheric turbulence modeling of visit 2025121400911 with the \citetalias{2021A&A...650A..81L} model used in the DP2 production. 
+        \includegraphics[scale=0.38]{2026010400620}
+        \includegraphics[scale=0.38]{2026010400620_L21_predict}
+        \includegraphics[scale=0.38]{2026010400620_L21_residuals}
+        \caption{\small Atmospheric turbulence modeling of visit 2026010400620 with the \citetalias{2021A&A...650A..81L} model used in the DP2 production. 
         Top row: $x$ (left) and $y$ (center) components of the astrometric residuals (in mas) as a function of position in the focal plane (in mm), and their 
         $E$-mode (blue) and $B$-mode (red) correlation functions as a function of angular separation (right); this visit is strongly affected by turbulence, 
         with an $E$-mode variance of ${\sim}1700\,\mathrm{mas}^2$, about five times the DP2 average (Fig.~\ref{EBmode}). Middle row: GP prediction at the 
         positions of the sources, with the same color scale, and the correlation functions of the prediction. Bottom row: residuals after subtraction of 
         the GP prediction, with a color scale reduced by a factor of ${\sim}3$, and their correlation functions; note the change of vertical scale, the $E$-mode 
-        variance at the smallest separations going from ${\sim}1700$ to ${\sim}110\,\mathrm{mas}^2$.}
-        \label{2025121400911_L21}
+        variance at the smallest separations going from ${\sim}1700$ to ${\sim}110\,\mathrm{mas}^2$. \NEW{TODO}}
+        \label{2026010400620_L21}
 \end{figure*}
 
 
 \begin{figure*}
         \centering
-        \includegraphics[scale=0.38]{2025121400911}
-        \includegraphics[scale=0.38]{2025121400911_L26_predict}
-        \includegraphics[scale=0.38]{2025121400911_L26_residuals}
-        \caption{\small Same as Fig.~\ref{2025121400911_L21} for TURBO-GP, on the same visit and with the same training sample. The prediction (middle row) 
+        \includegraphics[scale=0.38]{2026010400620}
+        \includegraphics[scale=0.38]{2026010400620_L26_predict}
+        \includegraphics[scale=0.38]{2026010400620_L26_residuals}
+        \caption{\small Same as Fig.~\ref{2026010400620_L21} for TURBO-GP, on the same visit and with the same training sample. The prediction (middle row) 
         follows the small-scale features of the residual field more closely, and the $E$-mode variance of the corrected residuals at the smallest separations 
-        (bottom right) is ${\sim}95\,\mathrm{mas}^2$, about 10\% lower than with \citetalias{2021A&A...650A..81L}.}
-        \label{2025121400911_L26}
+        (bottom right) is ${\sim}95\,\mathrm{mas}^2$, about 10\% lower than with \citetalias{2021A&A...650A..81L}. \NEW{TODO}}
+        \label{2026010400620_L26}
 \end{figure*}
 
 \subsection{Global results on DP2}
@@ -679,7 +679,18 @@ But before that, we discuss the correlation of the astrometric residuals with im
 
 \begin{figure*}
         \centering
-        \includegraphics[scale=0.6]{EBmodeResiduals_zoom}
+        \includegraphics[scale=0.42]{2026010400620_SNR25}
+        \includegraphics[scale=0.42]{training_validation_split}
+        \caption{\small \NEW{TO DO}}
+        \label{training_validation_split_discussion}
+\end{figure*}
+
+
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.6]{EBmodeResiduals50kZoom}
+        \includegraphics[scale=0.6]{EBmodeResidualsZoom50k_Validation}
         \caption{\small $E$-mode (blue) and $B$-mode (red) correlation functions of the astrometric residuals after correction of 
         the atmospheric turbulence, averaged over the 28\,517 DP2 visits, for the \citetalias{2021A&A...650A..81L} model used in the DP2 production 
         (triangles) and for TURBO-GP (crosses). Compared with the ${\sim}340\,\mathrm{mas}^2$ of $E$-mode variance before correction (Fig.~\ref{EBmode}), 
