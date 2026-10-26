@@ -782,6 +782,17 @@ Figure~\ref{psf_vs_emode} shows a clear correlation between the PSF FWHM and the
 This shows that, as expected, a major driver of the PSF FWHM is atmospheric turbulence.
 Figure~\ref{psf_vs_z4} shows the expected parabola between the PSF FWHM and the focus, but a large part of the scatter around it correlates with the standard 
 deviation of the $E$-mode, which is evidence that this scatter is driven by atmospheric turbulence.
+\NEW{Figure~\ref{psf_vs_z4_vs_emode} gathers the three pairwise correlations between the PSF FWHM, the standard deviation of the $E$-mode, and $z_4$, 
+and shows in addition that there is no correlation between the $E$-mode and $z_4$: the focus of the telescope and the atmospheric turbulence are 
+independent drivers of the PSF FWHM.}
+
+\NEW{To illustrate that the $E$-mode traces what is going on in the upper atmosphere, and its impact on image quality, Figure~\ref{2026010100352} shows, 
+for the night of 2026 January 1, the time series of $z_4$, of the PSF FWHM, and of the standard deviation of the $E$-mode over the night, together with 
+the astrometric residuals in focal-plane coordinates and the PSF model at the center of each raft for one visit of that night, visit 2026010100352. 
+An animated version of this figure covering the whole night, with one frame per visit, is provided as online material\footnote{\REF{persistent URL or DOI of the animation}}. 
+As can be seen, both the focus and the $E$-mode have an impact on the PSF FWHM. 
+In addition, the $E$-mode varies during the night on typical time scales of 30 minutes to 1 hour, which is expected from the upper atmosphere 
+(see, e.g., \citealt{2003MNRAS.340...52T}).}
 
 \begin{figure*}
         \centering
@@ -800,6 +811,32 @@ deviation of the $E$-mode, which is evidence that this scatter is driven by atmo
         and the scatter above the parabola is populated by the visits with a high $E$-mode, i.e., a strong atmospheric turbulence.}
         \label{psf_vs_z4}
 \end{figure*}
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.8]{psf_z4_Emode}
+        \caption{\small \NEW{Pairwise correlations between the median PSF FWHM (in arcsec), the median defocus Zernike coefficient $z_4$ 
+        (in $\mu$m) measured by the AOS, and the standard deviation of the $E$-mode of the astrometric residuals (in mas), with one point per DP2 visit. 
+        Top left: PSF FWHM as a function of $z_4$, with the dashed line showing the parabolic dependence of the PSF FWHM on the focus. 
+        Bottom left: standard deviation of the $E$-mode as a function of $z_4$; the two are uncorrelated. 
+        Bottom right: standard deviation of the $E$-mode as a function of the PSF FWHM, the correlation of Fig.~\ref{psf_vs_emode}.}}
+        \label{psf_vs_z4_vs_emode}
+\end{figure*}
+
+\begin{figure*}
+        \centering
+        \includegraphics[scale=0.35]{2026010100352}
+        \caption{\small \NEW{Night of 2026 January 1. Top: time series, with one point per visit, of the median defocus Zernike coefficient $z_4$ 
+        (in $\mu$m) measured by the AOS, of the median PSF FWHM (in arcsec), and of the standard deviation of the $E$-mode of the astrometric 
+        residuals (in mas), as a function of MJD; the red dashed line marks visit 2026010100352. Bottom: for that visit, $x$ (left) and $y$ (center) 
+        components of the astrometric residuals (in mas) as a function of position in the focal plane (in mm), and the PSF model fitted at the 
+        center of each raft, on its central sensor S11 (right). This figure is available as an animation covering the whole night 
+        (${\sim}500$ visits, one frame per visit, 50\,s at 10 frames per second): the red dashed line moves along the time series while the bottom row 
+        shows the residuals and the PSF of the current visit.}}
+        \label{2026010100352}
+\end{figure*}
+
+ 
 
 \subsection{On static defects from on-sky measurements}
 \label{static_CCD}

@@ -1,5 +1,18 @@
-
 \begin{abstract}
-Description of the application of TUrbulence Removal By fourier-Optimized Gaussian Process on DP2 data set and compare performance to default GP used in DP2.
+\NEW{Atmospheric turbulence displaces the apparent positions of sources in a single image by a spatially correlated, curl-free field
+whose variance grows as the exposure time shortens, which makes it the dominant source of astrometric error for the 30\,s visits
+of the Vera C. Rubin Observatory. In the 28\,518 visits of Data Preview 2 (DP2), we measure an $E$-mode variance of
+${\sim}340\,\mathrm{mas}^2$ in the astrometric residuals of LSSTCam, ten times the HSC value and three times the DES value.
+DP2 corrected this field with the Gaussian process of \citet{2021A&A...650A..81L}, a sheared von K\'arm\'an kernel fit to the
+measured two-point correlation function, which removes ${\sim}90\%$ of the turbulence variance but is slow, memory-hungry, and
+fails on a fraction of the visits. We present TURBO-GP (TUrbulence Removal By fourier-Optimized Gaussian Process), which is 
+inpsired by the work of \citet{2025AJ....170..361G} and pushed it further, by the uses of the measured two-point correlation function 
+directly as the kernel, with nothing to fit, and solves the Gaussian process on a regular grid of the focal plane by fast Fourier 
+transform and conjugate gradient, with
+positive semi-definiteness imposed once in Fourier space. On DP2, TURBO-GP reduces the error rate of the turbulence-fitting task
+from 5\% to 1\%, the total wall time from ${\sim}2.7$ years to ${\sim}2$ weeks, and the typical memory per job from ${\sim}7$\,GB
+to ${\sim}1$--$2$\,GB, while leaving less residual correlation; it also allows the training sample to grow from 10\,000 to 50\,000
+sources per visit, which halves the residual $E$-mode variance on validation sources. The corrected residuals are a clean probe
+of the atmosphere, whose $E$-mode correlates with the PSF FWHM, and, averaged in sensor coordinates, they reveal the static
+distortions of LSSTCam, of ${\sim}4$\,mas on ITL and 1--2\,mas on E2V sensors.}
 \end{abstract}
-
