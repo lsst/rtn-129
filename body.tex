@@ -17,14 +17,14 @@ To first order, obtaining the astrometric solution consists in fitting the optic
 To do so, the Rubin Observatory uses the same astrometric model as the Dark Energy Survey \citep[DES;][hereafter B17]{2017PASP..129g4503B}, 
 adapted to the needs of the Rubin Observatory within the LSST Science Pipelines \citep{PSTN-019}, as described in 
 \citet[hereafter S24]{DMTN-266}, with The Monster \citep{DMTN-277} as the reference catalog.
-The astrometric residuals discussed in this paper are the difference between the position of a source fitted by this model 
-over all the overlapping visits and its measured position in a given image.
 Once the optical distortion is fit, at least three effects still affect this mapping: differential chromatic refraction 
 (DCR; see, e.g., \citealt{2012PASP..124.1113A}), static shifts caused by CCD defects such as tree rings 
 (see, e.g., \citealt{2014JInst...9C4001P, 2014PASP..126..750P, 2017JInst..12C5015P}), and atmospheric turbulence (see, e.g., \citetalias{2017PASP..129g4503B}).
 All these effects are present at the same time, but we do not discuss DCR in this analysis.
 We focus on the astrometric distortions induced by atmospheric turbulence, and we take a deeper look at the static patterns, 
-which can be derived directly once atmospheric turbulence is corrected.
+which can be derived directly once atmospheric turbulence is corrected. Both effects can be seen in astrometric residuals. 
+The astrometric residuals discussed in this paper are the difference between the position of a source fitted by this model 
+over all the overlapping visits and its measured position in a given image.
 
 \citetalias{2017PASP..129g4503B} noticed that, once the astrometric model is fit, the astrometric residuals of a single visit are compatible with a 
 pure $E$-mode field with a variance of ${\sim}100\,\mathrm{mas}^2$.
@@ -51,7 +51,7 @@ This method removes about 90\% of the variance that turbulence introduces in the
 Following the path paved by \citetalias{2021AJ....162..106F} and \citetalias{2021A&A...650A..81L}, \citet[hereafter G25]{2025AJ....170..361G} pushed the approach further on DES data 
 by skipping the hyperparameter fit altogether, as well as the constraint of an analytical function to describe the spatial correlation, and using an interpolated version of the measured 
 two-point correlation function directly as the kernel.
-As there is no direct comparison with the other methods, it appears to perform similarly to the previous ones.
+While there is no direct comparison with the other methods, it appears to perform similarly to the previous ones.
 The price is a singular value decomposition (SVD) to remove the negative eigenvalues, since the resulting covariance matrix is not positive definite.
 Even with this SVD, we found \citetalias{2025AJ....170..361G} to be faster than \citetalias{2021A&A...650A..81L}, because there is no hyperparameter fit anymore and no evaluation of 
 the von K\'arm\'an kernel, whose calls to Bessel functions are slow.
@@ -94,7 +94,7 @@ DP2 consists of data taken at the Rubin Observatory with its wide-field optical 
 in six optical bands ($u$, $g$, $r$, $i$, $z$, and $y$), during its commissioning and early operations phases.
 It contains 29\,756 science-grade exposures covering about 15\,000\,deg$^2$, processed with the LSST Science Pipelines \citep{PSTN-019}.
 
-The astrometric calibration of DP2 follows \citetalias{DMTN-266}.
+The astrometric calibration of DP2 follows \citetalias{DMTN-266} and \cite{DMTN-324}.
 After single-visit processing, the isolated point sources (unresolved, unblended, with a signal-to-noise ratio between 8 and 1000) shared by all 
 the visits of a given band that overlap a given HEALPix level-3 region of the sky are associated, and a joint astrometric model is fit to them 
 with the \texttt{gbdes} package \citep{2022ascl.soft10011B}, using The Monster \citep{DMTN-277} as the reference catalog.
@@ -113,10 +113,11 @@ In this paper, we take the residuals produced by the \texttt{gbdes} fit of DP2 a
 This analysis is done on a subset of 28\,518 visits, which are the visits with a successful atmospheric turbulence fit with 
 the \citetalias{2021A&A...650A..81L} method described in Sect.~\ref{sec:l21}.
 Some visits overlap several HEALPix regions and therefore have several astrometric solutions.
-In the current processing, a visit that overlaps multiple HEALPix regions goes through as many \citetalias{2021A&A...650A..81L} fits as there 
-are overlapping regions, and the best astrometric solution is chosen for this visit further down the pipeline.
-In the same spirit, for a visit that overlaps multiple HEALPix regions, we keep only the (visit, HEALPix region) pair with the lowest 
-$E$-mode variance before any atmospheric modeling, in order to avoid duplicates.
+\NEW{In the current processing, a visit that overlaps multiple HEALPix regions goes through as 
+many \citetalias{2021A&A...650A..81L} fits as there are overlapping regions. Then the WCS is 
+selected on a per-detector basis by choosing the HEALPix that the given detector actually overlaps with.
+For this analysis and visits that overlaps multiple HEALPix regions, we keep only the (visit, HEALPix region) pair with the lowest 
+$E$-mode variance before any atmospheric modeling, in order to avoid duplicates.}
 
 An example of what the astrometric residuals look like is shown for three visits in Figure~\ref{2025051500_visits}.
 For all three visits, the astrometric residual field shows the expected stripe patterns, with spatial correlations 
@@ -198,21 +199,21 @@ is stationary: the covariance between the values of the field at two positions d
 \label{eq:xi}
 \xi(\mathbf{X}' - \mathbf{X}) \equiv \mathrm{Cov}\left[y(\mathbf{X}),\, y(\mathbf{X}')\right].
 \end{equation}
-The function $\xi$ is the two-point correlation function of the field; in the GP literature it is called the kernel, and $\xi(0)$ is the 
+The function $\xi$ is the two-point correlation function of the field; in the GP literature it is called the kernel, and $\xi(0)$ is the noise-free 
 variance of the field.
 
 The field is measured at $N$ positions $\mathbf{X}_i$, which form the training sample, with measurement 
-uncertainties $\sigma_i$: $y_i = y(\mathbf{X}_i) + \epsilon_i$, where $\epsilon_i$ is a Gaussian noise of variance $\sigma_i^2$, independent from one s
-ource to another.
+uncertainties $\sigma_i$: $y_i = y(\mathbf{X}_i) + \epsilon_i$, where $\epsilon_i$ is a Gaussian noise of variance $\sigma_i^2$, independent from one 
+source to another.
 The covariance matrix of these measurements is
 \begin{equation}
 \label{eq:C}
-C_{ij} = \xi(\mathbf{X}_i - \mathbf{X}_j) + \delta_{ij}\,\sigma_i^2 , \qquad \text{i.e.} \qquad \mathbf{C} = \mathbf{K} + \mathbf{D},
+C_{ij} = \xi(\mathbf{X}_i - \mathbf{X}_j) + \delta_{ij}\,\sigma_i^2 , \qquad \text{i.e.} \qquad \mathbf{C} = \boldsymbol{\xi} + \mathbf{D},
 \end{equation}
-where $\mathbf{K}$ is the covariance due to the turbulence field and $\mathbf{D} = \mathrm{diag}(\sigma_i^2)$ is the measurement noise.
+where $\boldsymbol{\xi}$ is the covariance due to the turbulence field and $\mathbf{D} = \mathrm{diag}(\sigma_i^2)$ is the measurement noise.
 Because everything is Gaussian, the values $\mathbf{y}'$ of the field at any other set of positions $\mathbf{X}'$ are also Gaussian once the
-measurements are known, with mean and covariance \citepalias[see also][Eqs.~8 and 10]{2021A&A...650A..81L}\NEW{.
-The mean is obtained in two steps.
+measurements are known. \NEW{
+Their mean, which is the GP prediction, is obtained in two steps.
 First, a vector of weights $\boldsymbol{\alpha}$, one per training source, is computed from the training sample alone by solving the linear system}
 \begin{equation}
 \label{eq:alpha}
@@ -221,17 +222,12 @@ First, a vector of weights $\boldsymbol{\alpha}$, one per training source, is co
 \NEW{Second, the field is interpolated at the positions $\mathbf{X}'$ as}
 \begin{equation}
 \label{eq:gpmean}
-\mathbf{y}' = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \boldsymbol{\alpha}, \qquad \text{i.e.} \qquad
+\mathbf{y}' = \boldsymbol{\xi}(\mathbf{X}', \mathbf{X})\, \boldsymbol{\alpha}, \qquad \text{i.e.} \qquad
 y'(\mathbf{X}') = \sum_{j=1}^{N} \alpha_j\, \xi(\mathbf{X}' - \mathbf{X}_j),
 \end{equation}
-\NEW{and its covariance is}
-\begin{equation}
-\label{eq:gpcov}
-\mathrm{Cov}(\mathbf{y}') = \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X}') - \boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})\, \mathbf{C}^{-1}\, \boldsymbol{\Xi}(\mathbf{X}, \mathbf{X}'),
-\end{equation}
-where $\boldsymbol{\Xi}(\mathbf{A}, \mathbf{B})_{ij} = \xi(\mathbf{A}_i - \mathbf{B}_j)$.
-\NEW{Equations~\ref{eq:alpha} and \ref{eq:gpmean} together are the GP prediction, and Eq.~\ref{eq:gpcov} its uncertainty.
-The two steps are the two steps of the algorithm: the linear system of Eq.~\ref{eq:alpha} is solved once per visit and per component,
+\NEW{where $\boldsymbol{\xi}(\mathbf{X}', \mathbf{X})_{ij} = \xi(\mathbf{X}'_i - \mathbf{X}_j)$ is the cross-covariance between the target and the training positions.}
+\NEW{Equations~\ref{eq:alpha} and \ref{eq:gpmean} together are the GP prediction.
+In practice, the linear system of Eq.~\ref{eq:alpha} is solved once per visit and per component,
 and Eq.~\ref{eq:gpmean} is then evaluated at as many positions as needed without solving anything again.
 Written as in the right-hand side of Eq.~\ref{eq:gpmean}, the prediction is the convolution of the kernel $\xi$ with the weights $\alpha_j$
 placed at the training positions, a form that is used in Sect.~\ref{sec:turbogp}.}
@@ -240,33 +236,36 @@ large when it is strongly correlated with the target position and well measured,
 redundancy between neighboring training sources.
 Without measurement noise, the prediction at a training position is the measured value itself; with noise, the GP smooths the data by 
 the amount that the correlation function and the noise allow.
-This estimator is the optimal linear interpolator of a Gaussian random field; it is known as kriging in geostatistics and as Wiener filtering 
-in signal processing.
 
-Two conditions have to be met in practice.
-First, $\mathbf{C}$ must be invertible for any set of positions, which requires $\mathbf{K}$ to be positive semi-definite, i.e., to have 
-no negative eigenvalue.
+\NEW{Three things stand between these equations and their use on real data:
+a mathematical requirement on the kernel, the cost of solving Eq.~\ref{eq:alpha}, and the choice of the kernel itself.
+The requirement is that $\boldsymbol{\xi}$ must be positive semi-definite, i.e., have no negative eigenvalue,
+so that $\mathbf{C}$ is invertible and Eq.~\ref{eq:alpha} has a solution for any set of positions.}
 For a stationary kernel, this is guaranteed if and only if the Fourier transform of $\xi$ is non-negative 
 everywhere \citep[Bochner's theorem;][]{bochner1933}.
 Analytic kernels such as the Gaussian or the von K\'arm\'an ones satisfy this condition by construction, but an arbitrary 
 function, for instance the noisy measured two-point correlation function or a spline fit to it, does not in general; this 
 is the reason why \citetalias{2021A&A...650A..81L} chose a parametric kernel, and the central difficulty of using the measured 
 correlation function directly, to which we come back in Sect.~\ref{sec:turbogp}.
-Second, the computing cost.
+
+\NEW{The cost is not a requirement but a practical limit, set by the size of $\mathbf{C}$.}
 $\mathbf{C}$ is an $N \times N$ matrix, and the standard way of \NEW{solving Eq.~\ref{eq:alpha}} is a Cholesky factorization, which
 takes $O(N^3)$ operations and $O(N^2)$ memory; the prediction at $M$ positions \NEW{(Eq.~\ref{eq:gpmean})} then requires the $M \times N$ cross-covariance
-matrix $\boldsymbol{\Xi}(\mathbf{X}', \mathbf{X})$, i.e., $O(NM)$ operations and memory.
-With $N \sim 10^4$ sources per visit, this is what limits the size of the training sample in production, and what 
-led \citetalias{2025AJ....170..361G} to split the DES field of view into patches.
+matrix $\boldsymbol{\xi}(\mathbf{X}', \mathbf{X})$, i.e., $O(NM)$ operations and memory.
+With $N \sim 10^4$ sources per visit, this is what limits the size of the training sample in production. 
+This is why \citetalias{2025AJ....170..361G} split the DES field of view into patches, and our first approach described in 
+Sect.~\ref{sec:l21} to split our field also per CCD. 
 
-Finally, the kernel $\xi$ has to be chosen.
+\NEW{The third point is the choice of the kernel $\xi$.}
 The classical approach picks an analytic family, for instance a Gaussian or, for atmospheric turbulence, a von K\'arm\'an correlation 
 function, with a few hyperparameters (an amplitude, a correlation length, and possibly an anisotropy), and finds their values by 
 maximizing the likelihood of the training data.
 Each evaluation of the likelihood requires the inverse and the determinant of $\mathbf{C}$, hence a Cholesky factorization, and the 
 optimizer needs many evaluations; for $N \sim 10^3$--$10^4$ this takes from minutes to hours per visit and per 
 component (\citetalias{2021A&A...650A..81L}, their Fig.~6).
-The next two subsections describe two ways around this cost.
+\NEW{Section~\ref{sec:l21} describes how \citetalias{2021A&A...650A..81L} addressed these three points,
+which is the method used in the DP2 production. Then Sect.~\ref{sec:turbogp} show how to go beyond \citetalias{2021A&A...650A..81L} and 
+by pushing forward what was introduce in \citetalias{2025AJ....170..361G}, which is TURBO-GP.}
 
 \subsection{L21 and DP2 implementation}
 \label{sec:l21}
@@ -287,8 +286,13 @@ symmetric positive $2 \times 2$ matrix that sets the correlation length in each 
 \begin{pmatrix} \cos\alpha & \sin\alpha \\ -\sin\alpha & \cos\alpha \end{pmatrix}.
 \end{equation}
 The correlation length is $\ell$ along the direction $\alpha$ and $q\ell$ perpendicular to it, with $q \le 1$; $q = 1$ is the isotropic case.
-\citetalias{2021A&A...650A..81L} parametrize the pair $(q, \alpha)$ with two ``shear'' components $(g_1, g_2)$, in exact analogy with the 
-ellipticity of galaxies in weak lensing, so that $g_1 = g_2 = 0$ corresponds to an isotropic correlation and the kernel has four 
+\citetalias{2021A&A...650A..81L} parametrize the pair $(q, \alpha)$ with two ``shear'' components $(g_1, g_2)$, in exact analogy with the
+ellipticity of galaxies in weak lensing\NEW{:}
+\begin{equation}
+\label{eq:shear}
+{\color{blue} q = \frac{1 - g}{1 + g}, \qquad \alpha = \frac{1}{2} \arctan\left(\frac{g_2}{g_1}\right), \qquad g = \sqrt{g_1^2 + g_2^2} < 1 .}
+\end{equation}
+\NEW{With this parametrization,} $g_1 = g_2 = 0$ corresponds to an isotropic correlation and the kernel has four
 hyperparameters: $\phi$, $\ell$, $g_1$, and $g_2$.
 
 Instead of maximizing the likelihood, \citetalias{2021A&A...650A..81L} measure the two-dimensional two-point correlation function of the training 
@@ -297,10 +301,10 @@ scales as $O(N \log N)$, estimate the covariance of this map by bootstrap resamp
 least-squares minimization,
 \begin{equation}
 \label{eq:chi2}
-\chi^2 = \left(\boldsymbol{\xi} - \hat{\boldsymbol{\xi}}(\boldsymbol{\theta}) - k\right)^T \mathbf{W} \left(\boldsymbol{\xi} - \hat{\boldsymbol{\xi}}(\boldsymbol{\theta}) - k\right),
+\chi^2 = \sum_{p,q} \left(\xi_p - \hat{\xi}_p(\boldsymbol{\theta}) - k\right) W_{pq} \left(\xi_q - \hat{\xi}_q(\boldsymbol{\theta}) - k\right),
 \end{equation}
-where $\boldsymbol{\xi}$ is the measured map, $\hat{\boldsymbol{\xi}}(\boldsymbol{\theta})$ the analytic kernel evaluated on the same grid for the 
-hyperparameters $\boldsymbol{\theta}$, $\mathbf{W}$ the inverse of the bootstrap covariance matrix, and $k$ a constant.
+where $\xi_p$ is the measured map at pixel $p$, $\hat{\xi}_p(\boldsymbol{\theta})$ the analytic kernel evaluated on the same grid for the 
+hyperparameters $\boldsymbol{\theta}$, $W_{pq}$ the inverse of the bootstrap covariance matrix of the map, and $k$ a constant.
 The constant is needed because the measured correlation function has negative lobes at large separations, which a positive kernel cannot reproduce; 
 $k$ is not part of the kernel used for the interpolation.
 The $O(N^3)$ likelihood evaluations are thus replaced by the fit of a smooth function to a small map, and a single Cholesky factorization 
@@ -317,10 +321,10 @@ fit within the computing budget of a production job.
 The two components are then treated independently.
 For each of them, the two-point correlation function of the training sample is measured on a $21 \times 21$ grid of separations 
 extending to $\pm 0.3^\circ$, with inverse-variance weights, the anisotropic von K\'arm\'an kernel is fit to it following Eq.~\ref{eq:chi2}, and 
-the matrix $\mathbf{C} = \mathbf{K} + \mathbf{D}$ of the training sample is built and factorized.
+the matrix $\mathbf{C} = \boldsymbol{\xi} + \mathbf{D}$ of the training sample is built and factorized.
 
 The prediction is then done detector by detector, because the astrometric model is stored per detector, in the same spirit as what is done in \citetalias{2025AJ....170..361G}.
-The GP uncertainty (Eq.~\ref{eq:gpcov}) is not computed in production.
+%The GP uncertainty (Eq.~\ref{eq:gpcov}) is not computed in production.
 
 The DP2 production revealed three limitations of this approach.
 First, the shape of the kernel is a choice.
@@ -346,7 +350,9 @@ TURBO-GP starts from \citetalias{2025AJ....170..361G} and removes this last obst
 \subsection{TUrbulence Removal By fourier-Optimized Gaussian Process}
 \label{sec:turbogp}
 
-The kernel of TURBO-GP is the one of \citetalias{2025AJ....170..361G}, an empirical kernel, with one addition, and is built in three steps 
+\subsubsection{TURBO-GP kernel}
+
+The kernel of TURBO-GP is based on the same spirit as \citetalias{2025AJ....170..361G}, an empirical kernel, with one addition, and is built in three steps 
 for each component of the residual field.
 First, the two-dimensional two-point correlation function of the training sample is measured with \texttt{TreeCorr} on a square grid of separations, 
 with inverse-variance weights; the configuration used in this paper has $20''$ pixels and extends to $\pm 0.3^\circ$.
@@ -392,14 +398,14 @@ The difficulty with this kernel is the one anticipated in Sect.~\ref{sec:gpbasic
 The cleaned map has a non-negative spectrum, so it is a valid kernel as a periodic function, with a period equal to the size of the measured 
 square ($0.6^\circ$ here); but the field of view is much larger than this period, and the kernel actually used sets the correlation to zero beyond the measured square.
 This truncation is what breaks the positive semi-definiteness: in Fourier space it convolves the spectrum with an oscillating function and 
-creates negative lobes, so that the matrix $\mathbf{K}$ between arbitrary source positions acquires negative eigenvalues whose magnitude 
+creates negative lobes, so that the matrix $\boldsymbol{\xi}$ between arbitrary source positions acquires negative eigenvalues whose magnitude 
 is a non-negligible fraction of the variance of the field.
 The Cholesky factorization of $\mathbf{C}$ then fails whenever some sources have small measurement uncertainties, which is exactly the 
 case of the bright sources that constrain the field the most.
-\citetalias{2025AJ....170..361G} repair $\mathbf{K}$ with a singular value decomposition whose small and negative singular values are 
+\citetalias{2025AJ....170..361G} repair $\boldsymbol{\xi}$ with a singular value decomposition whose small and negative singular values are 
 clipped to a positive floor, at an $O(N^3)$ cost for each visit and each component.
 
-TURBO-GP takes a different route, which makes the kernel positive semi-definite by construction and never forms the matrix $\mathbf{K}$.
+TURBO-GP takes a different route, which makes the kernel positive semi-definite by construction and never forms the matrix $\boldsymbol{\xi}$.
 The observation is that the cleaned map is exactly a finite sum of Fourier modes on its own grid: it is band-limited, so its values anywhere are 
 known exactly from its values on a grid.
 We therefore represent the covariance between sources through a fine regular grid of the tangent plane with a spacing $h$ equal to half the pixel of 
@@ -422,19 +428,19 @@ of the kernel, so that the periodic wrap of the discrete Fourier transform never
 The covariance between sources is then
 \begin{equation}
 \label{eq:wgw}
-\mathbf{K} = \mathbf{W}\, \mathbf{G}\, \mathbf{W}^T, \qquad \mathbf{G} = \frac{1}{N_g}\, \mathbf{F}^{\dagger}\, \mathrm{diag}(\hat{P}_k)\, \mathbf{F},
+\boldsymbol{\xi} = \mathbf{W}\, \mathbf{G}\, \mathbf{W}^T, \qquad \mathbf{G} = \frac{1}{N_g}\, \mathbf{F}^{\dagger}\, \mathrm{diag}(\hat{P}_k)\, \mathbf{F},
 \end{equation}
 where $\mathbf{F}$ is the two-dimensional discrete Fourier transform on the padded grid and $\hat{P}_k$ the Fourier coefficients of the kernel image, which are 
 real because the image is symmetric.
 Zero-padding the kernel image is a truncation again, and a few of the $\hat{P}_k$ are slightly negative; we clip them to zero, once, at the cost of one Fourier transform.
 \NEW{A covariance matrix is valid when no linear combination of the field values has a negative variance: for any set of weights $v_i$ attached to the sources,
-the variance of $\sum_i v_i\, y(\mathbf{X}_i)$ is $\mathbf{v}^T \mathbf{K}\, \mathbf{v}$, and with Eq.~\ref{eq:wgw} this quantity is a sum of non-negative terms,}
+the variance of $\sum_i v_i\, y(\mathbf{X}_i)$ is $\mathbf{v}^T \boldsymbol{\xi}\, \mathbf{v}$, and with Eq.~\ref{eq:wgw} this quantity is a sum of non-negative terms,}
 \begin{equation}
 \label{eq:psd}
-\mathbf{v}^T \mathbf{K}\, \mathbf{v} = \frac{1}{N_g} \sum_k \hat{P}_k \left| (\mathbf{F}\, \mathbf{W}^T \mathbf{v})_k \right|^2 \ge 0 ,
+\mathbf{v}^T \boldsymbol{\xi}\, \mathbf{v} = \frac{1}{N_g} \sum_k \hat{P}_k \left| (\mathbf{F}\, \mathbf{W}^T \mathbf{v})_k \right|^2 \ge 0 ,
 \end{equation}
-which is the statement that $\mathbf{K}$ is positive semi-definite, for any configuration of sources and not only for the training sample of a given visit.
-The matrix $\mathbf{C} = \mathbf{K} + \mathbf{D}$ is therefore positive definite as soon as every source has a non-zero uncertainty, and a failure of the 
+which is the statement that $\boldsymbol{\xi}$ is positive semi-definite, for any configuration of sources and not only for the training sample of a given visit.
+The matrix $\mathbf{C} = \boldsymbol{\xi} + \mathbf{D}$ is therefore positive definite as soon as every source has a non-zero uncertainty, and a failure of the 
 linear algebra is not repaired but impossible.
 Equation~\ref{eq:psd} is nothing else than Bochner's theorem applied to the padded grid: the effective kernel is the cleaned correlation function smoothed 
 by the bilinear interpolation at the scale $h$, a second-order effect, with the non-negative spectrum $\hat{P}_k$.
@@ -458,7 +464,7 @@ Second, this image is convolved by the kernel image through the padded grid, i.e
 by $\hat{P}_k$, which is what $\mathrm{diag}(\hat{P}_k)$ does, and transformed back: the result is the field that the values $\mathbf{v}$ placed at the
 training positions would produce at every node of the grid, as in the right-hand side of Eq.~\ref{eq:gpmean} (Fig.~\ref{fig:turbogp_matvec}b,c).
 Third, this field is read back at the position of each source by bilinear interpolation between the four nodes that surround it, i.e.,
-multiplied by $\mathbf{W}$, which gives the value of $\mathbf{K}\, \mathbf{v}$ at the sources.
+multiplied by $\mathbf{W}$, which gives the value of $\boldsymbol{\xi}\, \mathbf{v}$ at the sources.
 Fourth, the noise term $\sigma_i^2 v_i$ is added (Fig.~\ref{fig:turbogp_matvec}d).
 The vector $\mathbf{v}$ is anything with one number per training source: the data $\mathbf{y}$ in Fig.~\ref{fig:turbogp_matvec}, the successive
 search directions of the solve described below, or the weights $\boldsymbol{\alpha}$ at prediction time (Eq.~\ref{eq:meanfield}).}
@@ -495,7 +501,7 @@ data\NEW{, far from the cap of 500 iterations}.
         Fig.~\ref{fig:turbogp_kernel}f resampled on the nodes ($217 \times 217$). (c) Step 2: the convolution $\boldsymbol{\kappa} \ast \mathbf{W}^T \mathbf{y}$
         over the whole grid, computed with one pair of fast Fourier transforms on the padded $1728 \times 1728$ grid (shown averaged over $8 \times 8$ nodes;
         the black square is the zoom of panel a): the field that the values $\mathbf{y}$ placed at the sources would produce everywhere.
-        (d) Steps 3 and 4: the field read back at the sources by bilinear interpolation, $\mathbf{K}\, \mathbf{y}$, plus the noise term $\sigma_i^2 y_i$,
+        (d) Steps 3 and 4: the field read back at the sources by bilinear interpolation, $\boldsymbol{\xi}\, \mathbf{y}$, plus the noise term $\sigma_i^2 y_i$,
         which gives $\mathbf{C}\, \mathbf{y}$. The whole product takes ${\sim}30$~ms. Since $\mathbf{y}$ is in mas and $\mathbf{C}$ in mas$^2$, panels c
         and d are in mas$^3$. (e) The same four steps applied to the weights $\boldsymbol{\alpha}$ returned by the solve of Eq.~\ref{eq:alpha},
         $\mathbf{C}\, \boldsymbol{\alpha}$, and (f) the data $\mathbf{y}$: they agree to the $10^{-7}$ tolerance of the solve, which is what solving
