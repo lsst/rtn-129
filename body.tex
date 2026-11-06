@@ -301,10 +301,10 @@ scales as $O(N \log N)$, estimate the covariance of this map by bootstrap resamp
 least-squares minimization,
 \begin{equation}
 \label{eq:chi2}
-\chi^2 = \sum_{p,q} \left(\xi_p - \hat{\xi}_p(\boldsymbol{\theta}) - k\right) W_{pq} \left(\xi_q - \hat{\xi}_q(\boldsymbol{\theta}) - k\right),
+\chi^2 = \sum_{p,q} \left(\xi_p - \hat{\xi}_p(\boldsymbol{\theta}) - k\right) \left[\boldsymbol{\Sigma}_{\rm boot}^{-1}\right]_{pq} \left(\xi_q - \hat{\xi}_q(\boldsymbol{\theta}) - k\right),
 \end{equation}
 where $\xi_p$ is the measured map at pixel $p$, $\hat{\xi}_p(\boldsymbol{\theta})$ the analytic kernel evaluated on the same grid for the 
-hyperparameters $\boldsymbol{\theta}$, $W_{pq}$ the inverse of the bootstrap covariance matrix of the map, and $k$ a constant.
+hyperparameters $\boldsymbol{\theta}$, $\boldsymbol{\Sigma}_{\rm boot}$ the covariance matrix of the measured map estimated by bootstrap resampling of the sources, and $k$ a constant.
 The constant is needed because the measured correlation function has negative lobes at large separations, which a positive kernel cannot reproduce; 
 $k$ is not part of the kernel used for the interpolation.
 The $O(N^3)$ likelihood evaluations are thus replaced by the fit of a smooth function to a small map, and a single Cholesky factorization 
