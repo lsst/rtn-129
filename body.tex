@@ -350,7 +350,16 @@ TURBO-GP starts from \citetalias{2025AJ....170..361G} and removes this last obst
 \subsection{TUrbulence Removal By fourier-Optimized Gaussian Process}
 \label{sec:turbogp}
 
-\subsubsection{TURBO-GP kernel}
+\NEW{This section describes TURBO-GP in the order in which it is run.
+Section~\ref{sec:turbogp_kernel} builds the kernel from the measured two-point correlation function, as \citetalias{2025AJ....170..361G} do, and
+shows why this kernel is not positive semi-definite on its own.
+Section~\ref{sec:turbogp_grid} is the new element: the kernel is moved onto a regular grid, where it becomes positive semi-definite by construction
+and where the product by the covariance matrix is a convolution.
+Section~\ref{sec:turbogp_solve} solves the linear system of Eq.~\ref{eq:alpha} with this product, Sect.~\ref{sec:turbogp_predict} computes the
+prediction and discusses how the cost scales with the number of sources, and Sect.~\ref{sec:turbogp_origin} places TURBO-GP with respect to earlier Gaussian process methods and states the contribution of an AI assistant to its design.}
+
+\subsubsection{The empirical kernel and its limitation}
+\label{sec:turbogp_kernel}
 
 The kernel of TURBO-GP is based on the same spirit as \citetalias{2025AJ....170..361G}, an empirical kernel, with one addition, and is built in three steps 
 for each component of the residual field.
@@ -405,6 +414,9 @@ case of the bright sources that constrain the field the most.
 \citetalias{2025AJ....170..361G} repair $\boldsymbol{\xi}$ with a singular value decomposition whose small and negative singular values are 
 clipped to a positive floor, at an $O(N^3)$ cost for each visit and each component.
 
+\subsubsection{The TURBO-GP kernel on a grid}
+\label{sec:turbogp_grid}
+
 TURBO-GP takes a different route, which makes the kernel positive semi-definite by construction and never forms the matrix $\boldsymbol{\xi}$.
 The observation is that the cleaned map is exactly a finite sum of Fourier modes on its own grid: it is band-limited, so its values anywhere are 
 known exactly from its values on a grid.
@@ -446,6 +458,9 @@ there is no negative eigenvalue to clip.}
 Equation~\ref{eq:psd} is nothing else than Bochner's theorem applied to the padded grid: the effective kernel is the cleaned correlation function smoothed 
 by the bilinear interpolation at the scale $h$, a second-order effect, with the non-negative spectrum $\hat{P}_k$.
 The per-visit $O(N^3)$ decomposition of \citetalias{2025AJ....170..361G} is not accelerated but eliminated.
+
+\subsubsection{Solving the linear system}
+\label{sec:turbogp_solve}
 
 The linear system $\mathbf{C}\, \boldsymbol{\alpha} = \mathbf{y}$ of Eq.~\NEW{\ref{eq:alpha}} is solved without ever storing $\mathbf{C}$, with the conjugate
 gradient method \citep{hestenes1952} and a diagonal (Jacobi) preconditioner.
@@ -526,6 +541,9 @@ data\NEW{, far from the cap of 500 iterations}.
         \label{fig:turbogp_cg}
 \end{figure*}
 
+\subsubsection{Prediction and scaling with the number of sources}
+\label{sec:turbogp_predict}
+
 The prediction is also reorganized.
 \NEW{Once $\boldsymbol{\alpha}$ is known, Eq.~\ref{eq:gpmean} applied at every position $\mathbf{X}$ of the focal plane defines a field,}
 \begin{equation}
@@ -551,6 +569,9 @@ Only the kernel and the way the linear algebra is solved differ, so that the dif
 \NEW{However, the gain in computing time and memory allows this cap of 10\,000 training sources to be lifted, and we therefore ran a second version of
 TURBO-GP with 50\,000 randomly selected training sources. The choice of this number, and what is gained with respect to 10\,000 training sources,
 are discussed in Sect.~\ref{sec:TrainingValidation}.}
+
+\subsubsection{Relation to earlier methods and contribution of an AI assistant}
+\label{sec:turbogp_origin}
 
 None of the numerical ingredients of TURBO-GP is new in itself, and it is worth being precise about where they come from.
 Using the measured two-point correlation function directly as the kernel, and the role of Bochner's theorem in making such a kernel admissible, 
