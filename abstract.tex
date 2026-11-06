@@ -5,9 +5,9 @@ of the Vera C. Rubin Observatory. In the 28\,518 visits of Data Preview 2 (DP2),
 ${\sim}340\,\mathrm{mas}^2$ in the astrometric residuals of LSSTCam, ten times the HSC value and three times the DES value.
 DP2 corrected this field with the Gaussian process of \citet{2021A&A...650A..81L}, a sheared von K\'arm\'an kernel fit to the
 measured two-point correlation function, which removes ${\sim}90\%$ of the turbulence variance but is slow, memory-hungry, and
-fails on a fraction of the visits. We present TURBO-GP (TUrbulence Removal By fourier-Optimized Gaussian Process), which is 
-inpsired by the work of \citet{2025AJ....170..361G} and pushed it further, by the uses of the measured two-point correlation function 
-directly as the kernel, with nothing to fit, and solves the Gaussian process on a regular grid of the focal plane by fast Fourier 
+fails on a fraction of the visits. We present TURBO-GP (TUrbulence Removal By fourier-Optimized Gaussian Process), which is
+inspired by the work of \citet{2025AJ....170..361G} and pushes it further by using the measured two-point correlation function
+directly as the kernel, with nothing to fit, and solving the Gaussian process on a regular grid of the focal plane by fast Fourier 
 transform and conjugate gradient, with
 positive semi-definiteness imposed once in Fourier space. On DP2, TURBO-GP reduces the error rate of the turbulence-fitting task
 from 5\% to 1\%, the total wall time from ${\sim}2.7$ years to ${\sim}2$ weeks, and the typical memory per job from ${\sim}7$\,GB
