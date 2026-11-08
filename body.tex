@@ -238,8 +238,9 @@ Without measurement noise, the prediction at a training position is the measured
 the amount that the correlation function and the noise allow.
 
 \NEW{Three things stand between these equations and their use on real data:
-a mathematical requirement on the kernel, the cost of solving Eq.~\ref{eq:alpha}, and the choice of the kernel itself.
-The requirement is that $\boldsymbol{\xi}$ must be positive semi-definite, i.e., have no negative eigenvalue,
+a mathematical requirement on the kernel, the cost of solving Eq.~\ref{eq:alpha}, and the choice of the kernel itself.}
+
+\NEW{The requirement is that $\boldsymbol{\xi}$ must be positive semi-definite, i.e., have no negative eigenvalue,
 so that $\mathbf{C}$ is invertible and Eq.~\ref{eq:alpha} has a solution for any set of positions.}
 For a stationary kernel, this is guaranteed if and only if the Fourier transform of $\xi$ is non-negative 
 everywhere \citep[Bochner's theorem;][]{bochner1933}.
@@ -248,7 +249,7 @@ function, for instance the noisy measured two-point correlation function or a sp
 is the reason why \citetalias{2021A&A...650A..81L} chose a parametric kernel, and the central difficulty of using the measured 
 correlation function directly, to which we come back in Sect.~\ref{sec:turbogp}.
 
-\NEW{The cost is not a requirement but a practical limit, set by the size of $\mathbf{C}$.}
+\NEW{The cost is a practical limit, set by the size of $\mathbf{C}$.}
 $\mathbf{C}$ is an $N \times N$ matrix, and the standard way of \NEW{solving Eq.~\ref{eq:alpha}} is a Cholesky factorization, which
 takes $O(N^3)$ operations and $O(N^2)$ memory; the prediction at $M$ positions \NEW{(Eq.~\ref{eq:gpmean})} then requires the $M \times N$ cross-covariance
 matrix $\boldsymbol{\xi}(\mathbf{X}', \mathbf{X})$, i.e., $O(NM)$ operations and memory.
@@ -290,7 +291,7 @@ The correlation length is $\ell$ along the direction $\alpha$ and $q\ell$ perpen
 ellipticity of galaxies in weak lensing\NEW{:}
 \begin{equation}
 \label{eq:shear}
-{\color{blue} q = \frac{1 - g}{1 + g}, \qquad \alpha = \frac{1}{2} \arctan\left(\frac{g_2}{g_1}\right), \qquad g = \sqrt{g_1^2 + g_2^2} < 1 .}
+{q = \frac{1 - g}{1 + g}, \qquad \alpha = \frac{1}{2} \arctan\left(\frac{g_2}{g_1}\right), \qquad g = \sqrt{g_1^2 + g_2^2} < 1 .}
 \end{equation}
 \NEW{With this parametrization,} $g_1 = g_2 = 0$ corresponds to an isotropic correlation and the kernel has four
 hyperparameters: $\phi$, $\ell$, $g_1$, and $g_2$.
@@ -390,16 +391,13 @@ the two components, and, as explained below, we do not divide the field of view 
 \begin{figure*}
         \centering
         \includegraphics[width=\textwidth]{turbogp_kernel}
-        \caption{\small \NEW{The kernel of the two models on a real LSSTCam visit (2025052000348, $z$ band, 163\,661 sources; the example data
-        distributed by \citetalias{2025AJ....170..361G} with their code), $u$ component, from the same 10\,000 random training sources as in production.
+        \caption{\small \NEW{The kernel of the two models on a real LSSTCam visit (2025052000348), 
         Top row, \citetalias{2021A&A...650A..81L}: (a) the two-point correlation function measured with \texttt{TreeCorr} on a $21 \times 21$ grid of
-        separations out to $\pm 0.3^\circ$; (b) the anisotropic von K\'arm\'an kernel fitted to it (Eq.~\ref{eq:chi2}); (c) the difference between the two
-        (note the color scale), a coherent pattern with an rms of ${\sim}27\,\mathrm{mas}^2$: the part of the correlations that the parametric kernel does
+        separations out to $\pm 0.3^\circ$; (b) the anisotropic von K\'arm\'an kernel fitted to it (Eq.~\ref{eq:chi2}); (c) the difference between the two,
+        a coherent pattern with an rms of ${\sim}27\,\mathrm{mas}^2$: the part of the correlations that the parametric kernel does
         not describe. Bottom row, TURBO-GP: (d) the same measurement with $20''$ pixels ($108 \times 108$), multiplied by the elliptical Hann window matched
         to its anisotropy; (e) the low-frequency part of its Fourier power (half plane $k_u \ge 0$, logarithmic scale), in which the 51 modes above 2.5 times
-        the noise level are outlined; (f) the map transformed back from these modes alone, which is the kernel: the pattern of (d) without its noise.
-        All maps are in mas$^2$. The code and the data of this figure and of Figs.~\ref{fig:turbogp_matvec} and \ref{fig:turbogp_cg} are in the
-        \texttt{python/} directory of the technote repository.}}
+        the noise level are outlined; (f) the map transformed back from these modes alone, which is the kernel: the pattern of (d) without its noise.}}
         \label{fig:turbogp_kernel}
 \end{figure*}
 
@@ -428,7 +426,7 @@ four non-negative entries per row summing to one, where $N_g$ is the number of g
 by trigonometric interpolation, which is exact since the map is band-limited; we call the result the kernel image, $\kappa_m = \xi(\mathbf{g}_m)$,
 where $\mathbf{g}_m$ is the separation of node $m$ from the origin.
 The covariance between two grid nodes depends only on their separation, so the covariance matrix of the nodes, applied to any image $\mathbf{f}$
-defined on the nodes, is the convolution of that image by the kernel image $\mathbf{G}$,}
+defined on the nodes, is the convolution of that image by the kernel image; we call this matrix $\mathbf{G}$,}
 \begin{equation}
 \label{eq:G}
 (\mathbf{G}\, \mathbf{f})_m = \sum_{n} \xi(\mathbf{g}_m - \mathbf{g}_n)\, f_n = (\boldsymbol{\kappa} \ast \mathbf{f})_m .
